@@ -1,9 +1,9 @@
-%define bundled_elfutils 1
+%define bundled_elfutils 0
 %define elfutils_version 0.109
 
 Name: systemtap
 Version: 0.0.0.1rm
-Release: 1
+Release: 2
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -119,6 +119,9 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
+* Fri Jul 22 2005 Roland McGrath <roland@redhat.com> - 0.0.0.1rm-2
+- rawhide build with unbundled elfutils libs
+
 * Fri Jul 22 2005 Roland McGrath <roland@redhat.com>
 - Clean up spec file, build bundled elfutils.
 
