@@ -1,9 +1,9 @@
-%define bundled_elfutils 0
+%define bundled_elfutils 1
 %define elfutils_version 0.109
 
 Name: systemtap
 Version: 0.0.0.1rm
-Release: 3
+Release: 4
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
