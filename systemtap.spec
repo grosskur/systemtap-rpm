@@ -3,7 +3,7 @@
 
 Name: systemtap
 Version: 0.0.0.1rm
-Release: 4
+Release: 5
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
