@@ -1,9 +1,9 @@
 %define bundled_elfutils 1
-%define elfutils_version 0.109
+%define elfutils_version 0.111
 
 Name: systemtap
-Version: 0.0.0.1rm
-Release: 5
+Version: 0.2
+Release: 1
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -65,14 +65,11 @@ for dir in libelf libebl libdw libdwfl; do
   make -C $dir install includedir=$elfutils_includedir libdir=$elfutils_libdir
 done
 cd ..
-libdwfl_h=$elfutils_includedir/elfutils/libdwfl.h
-sed 's%<libdw.h>%<elfutils/libdw.h>%' ${libdwfl_h} > ${libdwfl_h}.new
-mv -f ${libdwfl_h}.new ${libdwfl_h}
 
 # We'll configure with these options to use the local headers and libraries.
 CPPFLAGS="-I${elfutils_includedir}"
 LDFLAGS="-L${elfutils_libdir} -Wl,-rpath-link,${elfutils_libdir} \
--Wl,--enable-new-dtags,-rpath,\\\$\$\$\$ORIGIN/../\\\$\$\$\$LIB/%{name}"
+-Wl,--enable-new-dtags,-rpath,%{_libdir}/%{name}"
 export CPPFLAGS LDFLAGS
 
 # We have to prevent the standard dependency generation from identifying
@@ -81,6 +78,9 @@ export CPPFLAGS LDFLAGS
 %define filter_eulibs() /bin/sh -c "%{1} | sed '/libelf/d;/libdw/d;/libebl/d'"
 %define __find_provides %{filter_eulibs /usr/lib/rpm/find-provides}
 %define __find_requires %{filter_eulibs /usr/lib/rpm/find-requires}
+
+# This will be needed for running stap when not installed, for the test suite.
+%define elfutils_mflags LD_LIBRARY_PATH=`pwd`/lib-elfutils
 %endif
 
 %configure
@@ -89,7 +89,8 @@ make docs
 
 %install
 rm -rf ${RPM_BUILD_ROOT}
-make DESTDIR=${RPM_BUILD_ROOT} install
+
+%makeinstall libexecdir=${RPM_BUILD_ROOT}%{_libexecdir}/systemtap
 
 %if %{bundled_elfutils}
 installed_elfutils=${RPM_BUILD_ROOT}%{_libdir}/%{name}
@@ -97,6 +98,8 @@ mkdir -p ${installed_elfutils}
 cp -P lib-elfutils/*.so* lib-elfutils/%{name}/*.so* ${installed_elfutils}/
 %endif
 
+%check
+make check %{?elfutils_mflags} || :
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
@@ -107,10 +110,12 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc README AUTHORS NEWS runtime/docs/html
 
 %{_bindir}/stap
-%{_libexecdir}/stpd
+%{_mandir}/man1/*
+%{_libexecdir}/systemtap/stpd
 
 %dir %{_datadir}/systemtap
 %{_datadir}/systemtap/runtime
+%{_datadir}/systemtap/tapset
 
 %if %{bundled_elfutils}
 %dir %{_libdir}/%{name}
@@ -119,10 +124,10 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Fri Jul 22 2005 Roland McGrath <roland@redhat.com> - 0.0.0.1rm-2
-- rawhide build with unbundled elfutils libs
+* Fri Jul 29 2005 Roland McGrath <roland@redhat.com> - 0.2-1
+- New version 0.2, requires elfutils 0.111
 
-* Fri Jul 22 2005 Roland McGrath <roland@redhat.com>
+* Mon Jul 25 2005 Roland McGrath <roland@redhat.com>
 - Clean up spec file, build bundled elfutils.
 
 * Thu Jul 21 2005 Martin Hunt <hunt@redhat.com>
