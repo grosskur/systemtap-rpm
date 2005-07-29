@@ -1,4 +1,4 @@
-%define bundled_elfutils 1
+%define bundled_elfutils 0
 %define elfutils_version 0.111
 
 Name: systemtap
