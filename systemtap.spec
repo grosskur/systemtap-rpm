@@ -2,8 +2,8 @@
 %define elfutils_version 0.111
 
 Name: systemtap
-Version: 0.2
-Release: 1
+Version: 0.2.1
+Release: 2
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -90,7 +90,7 @@ make docs
 %install
 rm -rf ${RPM_BUILD_ROOT}
 
-%makeinstall libexecdir=${RPM_BUILD_ROOT}%{_libexecdir}/systemtap
+%makeinstall
 
 %if %{bundled_elfutils}
 installed_elfutils=${RPM_BUILD_ROOT}%{_libdir}/%{name}
@@ -124,6 +124,12 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
+* Wed Aug  3 2005 Roland McGrath <roland@redhat.com> - 0.2.1-2
+- Rebuilt for FC5.
+
+* Wed Aug  3 2005 Roland McGrath <roland@redhat.com> - 0.2.1-1
+- New version 0.2.1, various fixes.
+
 * Fri Jul 29 2005 Roland McGrath <roland@redhat.com> - 0.2-1
 - New version 0.2, requires elfutils 0.111
 
