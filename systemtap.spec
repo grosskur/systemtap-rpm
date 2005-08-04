@@ -2,7 +2,7 @@
 %define elfutils_version 0.111
 
 Name: systemtap
-Version: 0.2.1
+Version: 0.2.2
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -98,6 +98,8 @@ mkdir -p ${installed_elfutils}
 cp -P lib-elfutils/*.so* lib-elfutils/%{name}/*.so* ${installed_elfutils}/
 %endif
 
+mkdir -p $RPM_BUILD_ROOT/var/cache/systemtap
+
 %check
 make check %{?elfutils_mflags} || :
 
@@ -111,11 +113,13 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %{_bindir}/stap
 %{_mandir}/man1/*
-%{_libexecdir}/systemtap/stpd
+%{_libexecdir}/systemtap/*
 
 %dir %{_datadir}/systemtap
 %{_datadir}/systemtap/runtime
 %{_datadir}/systemtap/tapset
+
+%dir %attr(0755,root,root) /var/cache/systemtap
 
 %if %{bundled_elfutils}
 %dir %{_libdir}/%{name}
@@ -124,8 +128,12 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Wed Aug  3 2005 Roland McGrath <roland@redhat.com> - 0.2.1-2
+* Thu Aug  4 2005 Roland McGrath <roland@redhat.com> - 0.2.2-2
 - Rebuilt for FC5.
+
+* Wed Aug  3 2005 Martin Hunt <hunt@redhat.com> - 0.2.2-1
+- Add directory /var/cache/systemtap
+- Add stp_check to /usr/libexec/systemtap
 
 * Wed Aug  3 2005 Roland McGrath <roland@redhat.com> - 0.2.1-1
 - New version 0.2.1, various fixes.
