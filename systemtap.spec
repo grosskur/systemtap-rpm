@@ -1,8 +1,8 @@
 %define bundled_elfutils 0
-%define elfutils_version 0.111
+%define elfutils_version 0.114
 
 Name: systemtap
-Version: 0.2.2
+Version: 0.3
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -15,8 +15,10 @@ ExclusiveArch: %{ix86} x86_64
 BuildRoot: %{_tmppath}/%{name}-root
 
 Requires: kernel >= 2.6.9-11
-Requires: tcl gcc make
-BuildRequires: doxygen
+Requires: kernel-devel
+# or is that kernel-smp-devel?
+Requires: kernel-debuginfo
+Requires: gcc make
 
 %if %{bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
@@ -30,8 +32,6 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 SystemTap is an instrumentation system for systems running Linux 2.6.
 Developers can write instrumentation to collect data on the operation
 of the system.
-
-See the HTML documentation for further details.
 
 %prep
 %setup -q %{?setup_elfutils}
@@ -85,7 +85,6 @@ export CPPFLAGS LDFLAGS
 
 %configure
 make %{?_smp_mflags}
-make docs
 
 %install
 rm -rf ${RPM_BUILD_ROOT}
@@ -109,7 +108,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %files
 %defattr(-,root,root)
 
-%doc README AUTHORS NEWS runtime/docs/html
+%doc README AUTHORS NEWS COPYING
 
 %{_bindir}/stap
 %{_mandir}/man1/*
@@ -128,8 +127,11 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Thu Aug  4 2005 Roland McGrath <roland@redhat.com> - 0.2.2-2
-- Rebuilt for FC5.
+* Fri Aug 26 2005 Frank Eigler <fche@redhat.com> - 0.3-2
+- Rebuilt for devel
+
+* Wed Aug 16 2005 Frank Ch. Eigler <fche@redhat.com>
+- Bump version.
 
 * Wed Aug  3 2005 Martin Hunt <hunt@redhat.com> - 0.2.2-1
 - Add directory /var/cache/systemtap
