@@ -1,8 +1,8 @@
 %define bundled_elfutils 0
-%define elfutils_version 0.114
+%define elfutils_version 0.115
 
 Name: systemtap
-Version: 0.3
+Version: 0.4
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -17,8 +17,8 @@ BuildRoot: %{_tmppath}/%{name}-root
 Requires: kernel >= 2.6.9-11
 Requires: kernel-devel
 # or is that kernel-smp-devel?
-Requires: kernel-debuginfo
 Requires: gcc make
+# Suggest: kernel-debuginfo
 
 %if %{bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
@@ -112,6 +112,7 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %{_bindir}/stap
 %{_mandir}/man1/*
+%{_mandir}/man5/*
 %{_libexecdir}/systemtap/*
 
 %dir %{_datadir}/systemtap
@@ -127,8 +128,11 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Fri Aug 26 2005 Frank Eigler <fche@redhat.com> - 0.3-2
+* Wed Sep  7 2005 Frank Eigler <fche@redhat.com> - 0.4-2
 - Rebuilt for devel
+
+* Wed Sep  7 2005 Frank Ch. Eigler <fche@redhat.com>
+- Bump version.
 
 * Wed Aug 16 2005 Frank Ch. Eigler <fche@redhat.com>
 - Bump version.
