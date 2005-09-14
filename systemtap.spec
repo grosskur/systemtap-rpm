@@ -2,7 +2,7 @@
 %define elfutils_version 0.115
 
 Name: systemtap
-Version: 0.4
+Version: 0.4.1
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -59,6 +59,8 @@ cat > configure <<\EOF
 exec ../elfutils-%{elfutils_version}/configure "$@"
 EOF
 chmod +x configure
+LDFLAGS=-Wl,--enable-new-dtags,-rpath,%{_libdir}/%{name}
+export LDFLAGS
 %configure --enable-libebl-subdir=%{name}
 make %{?_smp_mflags}
 for dir in libelf libebl libdw libdwfl; do
@@ -128,8 +130,14 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Wed Sep  7 2005 Frank Eigler <fche@redhat.com> - 0.4-2
+* Wed Sep 14 2005 Roland McGrath <roland@redhat.com> - 0.4.1-2
 - Rebuilt for devel
+
+* Wed Sep 14 2005 Roland McGrath <roland@redhat.com> - 0.4.1-1
+- Many fixes and improvements since 0.2.2; relevant PRs include:
+  1122, 1134, 1155, 1172, 1174, 1175, 1180, 1186, 1187, 1191, 1193, 1195,
+  1197, 1205, 1206, 1209, 1213, 1244, 1257, 1258, 1260, 1265, 1268, 1270,
+  1289, 1292, 1306, 1335, 1257
 
 * Wed Sep  7 2005 Frank Ch. Eigler <fche@redhat.com>
 - Bump version.
