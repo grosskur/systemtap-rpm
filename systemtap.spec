@@ -1,8 +1,8 @@
 %define bundled_elfutils 0
-%define elfutils_version 0.115
+%define elfutils_version 0.116
 
 Name: systemtap
-Version: 0.4.1
+Version: 0.4.2
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -130,8 +130,12 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Wed Sep 14 2005 Roland McGrath <roland@redhat.com> - 0.4.1-2
+* Mon Oct 31 2005 Roland McGrath <roland@redhat.com> - 0.4.2-2
 - Rebuilt for devel
+
+* Mon Oct 31 2005 Roland McGrath <roland@redhat.com> - 0.4.2-1
+- Many fixes and improvements: PRs 1344, 1260, 1330, 1295, 1311, 1368,
+  1182, 1131, 1332, 1366, 1456, 1271, 1338, 1482, 1477, 1194.
 
 * Wed Sep 14 2005 Roland McGrath <roland@redhat.com> - 0.4.1-1
 - Many fixes and improvements since 0.2.2; relevant PRs include:
