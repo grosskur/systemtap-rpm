@@ -2,7 +2,7 @@
 %define elfutils_version 0.116
 
 Name: systemtap
-Version: 0.4.2
+Version: 0.5
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -10,7 +10,7 @@ License: GPL
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/%{name}-%{version}.tar.gz
 
-ExclusiveArch: %{ix86} x86_64
+ExclusiveArch: %{ix86} x86_64 ppc ia64
 
 BuildRoot: %{_tmppath}/%{name}-root
 
@@ -130,8 +130,12 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Mon Oct 31 2005 Roland McGrath <roland@redhat.com> - 0.4.2-2
+* Fri Dec  2 2005 Frank Eigler <fche@redhat.com> - 0.5-2
 - Rebuilt for devel
+
+* Fri Dec 02 2005  Frank Ch. Eigler  <fche@redhat.com> - 0.5-1
+- Many fixes and improvements: 1425, 1536, 1505, 1380, 1329, 1828, 1271,
+  1339, 1340, 1345, 1837, 1917, 1903, 1336, 1868, 1594, 1564, 1276, 1295
 
 * Mon Oct 31 2005 Roland McGrath <roland@redhat.com> - 0.4.2-1
 - Many fixes and improvements: PRs 1344, 1260, 1330, 1295, 1311, 1368,
