@@ -3,7 +3,7 @@
 
 Name: systemtap
 Version: 0.5.1
-Release: 2
+Release: 2.1
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -100,6 +100,9 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
+* Fri Dec 16 2005 Jesse Keating <jkeating@redhat.com> - 0.5.1-2.1
+- Rebuilt for devel
+
 * Mon Dec 12 2005 Roland McGrath <roland@redhat.com> - 0.5.1-2
 - Rebuilt for devel
 
