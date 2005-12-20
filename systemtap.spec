@@ -2,8 +2,8 @@
 %define elfutils_version 0.118
 
 Name: systemtap
-Version: 0.5.1
-Release: 2.1
+Version: 0.5.2
+Release: 2
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -100,11 +100,11 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Fri Dec 16 2005 Jesse Keating <jkeating@redhat.com> - 0.5.1-2.1
+* Mon Dec 19 2005 Roland McGrath <roland@redhat.com> - 0.5.2-2
 - Rebuilt for devel
 
-* Mon Dec 12 2005 Roland McGrath <roland@redhat.com> - 0.5.1-2
-- Rebuilt for devel
+* Mon Dec 19 2005 Roland McGrath <roland@redhat.com> - 0.5.2-1
+- Fixed build with gcc 4.1, various tapset changes.
 
 * Wed Dec  7 2005 Roland McGrath <roland@redhat.com> - 0.5.1-1
 - elfutils update, build changes
