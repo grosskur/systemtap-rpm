@@ -1,8 +1,8 @@
 %define bundled_elfutils 0
-%define elfutils_version 0.118
+%define elfutils_version 0.119
 
 Name: systemtap
-Version: 0.5.2
+Version: 0.5.3
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -100,8 +100,12 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Mon Dec 19 2005 Roland McGrath <roland@redhat.com> - 0.5.2-2
+* Mon Jan 16 2006 Roland McGrath <roland@redhat.com> - 0.5.3-2
 - Rebuilt for devel
+
+* Mon Jan 16 2006 Roland McGrath <roland@redhat.com> - 0.5.3-1
+- Many changes, affected PRs include: 2056, 1144, 1379, 2057,
+  2060, 1972, 2140, 2148
 
 * Mon Dec 19 2005 Roland McGrath <roland@redhat.com> - 0.5.2-1
 - Fixed build with gcc 4.1, various tapset changes.
