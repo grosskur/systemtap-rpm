@@ -1,2 +1,3 @@
-5aef2312e7e767902e398811ed9388c9  systemtap-0.5.3.tar.gz
+f39bcf7e1c380e8eaa768e1230dc2fad  systemtap-0.5.4.tar.gz
 57b9e4ab3b9fb597a72badf26f7f9bdc  elfutils-0.119.tar.gz
+6e30f194fc5daae3bfd92385e41f64c7  elfutils-portability.patch

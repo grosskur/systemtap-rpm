@@ -2,7 +2,7 @@
 %define elfutils_version 0.119
 
 Name: systemtap
-Version: 0.5.3
+Version: 0.5.4
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -13,8 +13,8 @@ Source: ftp://sourceware.org/pub/%{name}/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 
 Requires: kernel >= 2.6.9-11
-Requires: kernel-devel
-# or is that kernel-smp-devel?
+# Requires: kernel-devel
+# or is that kernel-smp-devel?  kernel-hugemem-devel?
 Requires: gcc make
 # Suggest: kernel-debuginfo
 
@@ -100,8 +100,11 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Mon Jan 16 2006 Roland McGrath <roland@redhat.com> - 0.5.3-2
+* Thu Feb  2 2006 Frank Eigler <fche@redhat.com> - 0.5.4-2
 - Rebuilt for devel
+
+* Wed Feb  1 2006 Frank Ch. Eigler <fche@redhat.com> - 0.5.4-1
+- PRs 1916, 2205, 2142, 2060, 1379
 
 * Mon Jan 16 2006 Roland McGrath <roland@redhat.com> - 0.5.3-1
 - Many changes, affected PRs include: 2056, 1144, 1379, 2057,
