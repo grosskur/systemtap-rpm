@@ -3,7 +3,7 @@
 
 Name: systemtap
 Version: 0.5.4
-Release: 2
+Release: 2.1
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -100,6 +100,9 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
+* Tue Feb 07 2006 Jesse Keating <jkeating@redhat.com> - 0.5.4-2.1
+- rebuilt for new gcc4.1 snapshot and glibc changes
+
 * Thu Feb  2 2006 Frank Eigler <fche@redhat.com> - 0.5.4-2
 - Rebuilt for devel
 
