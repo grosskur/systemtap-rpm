@@ -3,7 +3,7 @@
 
 Name: systemtap
 Version: 0.5.4
-Release: 2.1
+Release: 2.2
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -100,6 +100,9 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
+* Fri Feb 10 2006 Jesse Keating <jkeating@redhat.com> - 0.5.4-2.2
+- bump again for double-long bug on ppc(64)
+
 * Tue Feb 07 2006 Jesse Keating <jkeating@redhat.com> - 0.5.4-2.1
 - rebuilt for new gcc4.1 snapshot and glibc changes
 
