@@ -1,9 +1,9 @@
 %define bundled_elfutils 0
-%define elfutils_version 0.119
+%define elfutils_version 0.120
 
 Name: systemtap
-Version: 0.5.4
-Release: 2.2
+Version: 0.5.5
+Release: 2
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -100,14 +100,12 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Fri Feb 10 2006 Jesse Keating <jkeating@redhat.com> - 0.5.4-2.2
-- bump again for double-long bug on ppc(64)
-
-* Tue Feb 07 2006 Jesse Keating <jkeating@redhat.com> - 0.5.4-2.1
-- rebuilt for new gcc4.1 snapshot and glibc changes
-
-* Thu Feb  2 2006 Frank Eigler <fche@redhat.com> - 0.5.4-2
+* Tue Apr  4 2006 Roland McGrath <roland@redhat.com> - 0.5.5-2
 - Rebuilt for devel
+
+* Tue Apr  4 2006 Roland McGrath <roland@redhat.com> - 0.5.5-1
+- Many changes, affected PRs include: 2068, 2293, 1989, 2334,
+  1304, 2390, 2425, 953.
 
 * Wed Feb  1 2006 Frank Ch. Eigler <fche@redhat.com> - 0.5.4-1
 - PRs 1916, 2205, 2142, 2060, 1379
