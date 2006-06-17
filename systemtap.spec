@@ -1,8 +1,9 @@
+# Yo!  DO NOT THE FOLLOWING LINE.
 %define bundled_elfutils 0
-%define elfutils_version 0.120
+%define elfutils_version 0.121
 
 Name: systemtap
-Version: 0.5.5
+Version: 0.5.8
 Release: 2
 Summary: Instrumentation System
 Group: Development/System
@@ -13,6 +14,8 @@ Source: ftp://sourceware.org/pub/%{name}/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 
 Requires: kernel >= 2.6.9-11
+BuildRequires: glib2-devel >= 2.0.0
+Requires: glib2 >= 2.0.0
 # Requires: kernel-devel
 # or is that kernel-smp-devel?  kernel-hugemem-devel?
 Requires: gcc make
@@ -83,6 +86,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc README AUTHORS NEWS COPYING
 
 %{_bindir}/stap
+%{_bindir}/lket-b2a
 %{_mandir}/man1/*
 %{_mandir}/man5/*
 %{_libexecdir}/systemtap/*
@@ -100,8 +104,15 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Tue Apr  4 2006 Roland McGrath <roland@redhat.com> - 0.5.5-2
+* Fri Jun 16 2006 Roland McGrath <roland@redhat.com> - 0.5.8-2
 - Rebuilt for devel
+
+* Fri Jun 16 2006 Roland McGrath <roland@redhat.com> - 0.5.8-1
+- PRs 2627, 2520, 2228, 2645
+
+* Fri May  5 2006 Frank Ch. Eigler <fche@redhat.com> - 0.5.7-1
+- PRs 2511 2453 2307 1813 1944 2497 2538 2476 2568 1341 2058 2220 2437
+  1326 2014 2599 2427 2438 2465 1930 2149 2610 2293 2634 2506 2433
 
 * Tue Apr  4 2006 Roland McGrath <roland@redhat.com> - 0.5.5-1
 - Many changes, affected PRs include: 2068, 2293, 1989, 2334,
