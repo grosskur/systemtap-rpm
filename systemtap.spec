@@ -1,10 +1,32 @@
-# Yo!  DO NOT THE FOLLOWING LINE.
+# Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
+%define release 1
+# Version number of oldest elfutils release that works with systemtap.
+%define elfutils_version 0.122
+
+# Set bundled_elfutils to 0 on systems that have %{elfutils_version} or newer.
+%if 0%{?fedora}
+%define bundled_elfutils 1
+%if "%fedora" >= "6"
 %define bundled_elfutils 0
-%define elfutils_version 0.121
+%endif
+%endif
+
+%if 0%{?rhel}
+%define bundled_elfutils 1
+%if "%rhel" >= "5"
+%define bundled_elfutils 0
+%endif
+%endif
+
+%if 0%{!?bundled_elfutils:1}
+# Yo!  DO NOT TOUCH THE FOLLOWING LINE.
+# You can use rpmbuild --define "bundled_elfutils 0" for a build of your own.
+%define bundled_elfutils 1
+%endif
 
 Name: systemtap
-Version: 0.5.8
-Release: 2.1
+Version: 0.5.9
+Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
 License: GPL
@@ -104,11 +126,8 @@ rm -rf ${RPM_BUILD_ROOT}
 
 
 %changelog
-* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 0.5.8-2.1
-- rebuild
-
-* Fri Jun 16 2006 Roland McGrath <roland@redhat.com> - 0.5.8-2
-- Rebuilt for devel
+* Wed Jul 19 2006 Roland McGrath <roland@redhat.com> - 0.5.9-1
+- PRs 2669, 2913
 
 * Fri Jun 16 2006 Roland McGrath <roland@redhat.com> - 0.5.8-1
 - PRs 2627, 2520, 2228, 2645
