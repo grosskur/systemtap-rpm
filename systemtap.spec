@@ -1,7 +1,7 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
 %define release 1
 # Version number of oldest elfutils release that works with systemtap.
-%define elfutils_version 0.122
+%define elfutils_version 0.124
 
 # Set bundled_elfutils to 0 on systems that have %{elfutils_version} or newer.
 %if 0%{?fedora}
@@ -25,7 +25,7 @@
 %endif
 
 Name: systemtap
-Version: 0.5.9
+Version: 0.5.10
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
@@ -42,6 +42,7 @@ Requires: glib2 >= 2.0.0
 # or is that kernel-smp-devel?  kernel-hugemem-devel?
 Requires: gcc make
 # Suggest: kernel-debuginfo
+Requires: systemtap-runtime = %{version}-%{release}
 
 %if %{bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
@@ -55,6 +56,18 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 SystemTap is an instrumentation system for systems running Linux 2.6.
 Developers can write instrumentation to collect data on the operation
 of the system.
+
+%package runtime
+Summary: Instrumentation System Runtime
+Group: Development/System
+License: GPL
+URL: http://sourceware.org/systemtap/
+Requires: kernel >= 2.6.9-11
+
+%description runtime
+SystemTap runtime is the runtime component of an instrumentation
+system for systems running Linux 2.6.  Developers can write
+instrumentation to collect data on the operation of the system.
 
 %prep
 %setup -q %{?setup_elfutils}
@@ -124,8 +137,14 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_libdir}/%{name}/lib*.so*
 %endif
 
+%files runtime
+%defattr(-,root,root)
+%{_bindir}/staprun
 
 %changelog
+* Tue Sep 26 2006 David Smith <dsmith@redhat.com> - 0.5.10-1
+- Added 'systemtap-runtime' subpackage.
+
 * Wed Jul 19 2006 Roland McGrath <roland@redhat.com> - 0.5.9-1
 - PRs 2669, 2913
 
