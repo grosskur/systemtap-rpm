@@ -1,7 +1,7 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
 %define release 1
 # Version number of oldest elfutils release that works with systemtap.
-%define elfutils_version 0.124
+%define elfutils_version 0.125
 
 # Set bundled_elfutils to 0 on systems that have %{elfutils_version} or newer.
 %if 0%{?fedora}
@@ -25,7 +25,7 @@
 %endif
 
 Name: systemtap
-Version: 0.5.10
+Version: 0.5.12
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
@@ -37,6 +37,8 @@ BuildRoot: %{_tmppath}/%{name}-root
 
 Requires: kernel >= 2.6.9-11
 BuildRequires: glib2-devel >= 2.0.0
+# make check
+BuildRequires: dejagnu
 Requires: glib2 >= 2.0.0
 # Requires: kernel-devel
 # or is that kernel-smp-devel?  kernel-hugemem-devel?
@@ -118,7 +120,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %files
 %defattr(-,root,root)
 
-%doc README AUTHORS NEWS COPYING
+%doc README AUTHORS NEWS COPYING examples
 
 %{_bindir}/stap
 %{_bindir}/lket-b2a
@@ -142,6 +144,9 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_bindir}/staprun
 
 %changelog
+* Mon Jan  1 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.12-1
+- Many changes, see NEWS file.
+
 * Tue Sep 26 2006 David Smith <dsmith@redhat.com> - 0.5.10-1
 - Added 'systemtap-runtime' subpackage.
 
