@@ -103,7 +103,7 @@ cd ..
 %endif
 
 %configure %{?elfutils_config}
-make %{?_smp_mflags}
+make %{?_smp_mflags} AM_CFLAGS="-D_GNU_SOURCE -fexceptions -Wall -Wextra"
 
 # Fix paths in the example scripts
 find examples -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
