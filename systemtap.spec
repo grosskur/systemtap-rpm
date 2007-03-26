@@ -25,7 +25,7 @@
 %endif
 
 Name: systemtap
-Version: 0.5.12
+Version: 0.5.13
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
@@ -33,7 +33,7 @@ License: GPL
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/%{name}-%{version}.tar.gz
 
-BuildRoot: %{_tmppath}/%{name}-root
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
 BuildRequires: glib2-devel >= 2.0.0
@@ -45,6 +45,7 @@ Requires: glib2 >= 2.0.0
 Requires: gcc make
 # Suggest: kernel-debuginfo
 Requires: systemtap-runtime = %{version}-%{release}
+Requires: sudo
 
 %if %{bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
@@ -104,12 +105,15 @@ cd ..
 %configure %{?elfutils_config}
 make %{?_smp_mflags}
 
+# Fix paths in the example scripts
+find examples -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
+
+# To avoid perl dependency, make perl sample script non-executable
+chmod -x examples/samples/kmalloc-top
+
 %install
 rm -rf ${RPM_BUILD_ROOT}
-
-%makeinstall
-
-mkdir -p $RPM_BUILD_ROOT/var/cache/systemtap
+make DESTDIR=$RPM_BUILD_ROOT install
 
 %check
 make check %{?elfutils_mflags} || :
@@ -126,13 +130,10 @@ rm -rf ${RPM_BUILD_ROOT}
 %{_bindir}/lket-b2a
 %{_mandir}/man1/*
 %{_mandir}/man5/*
-%{_libexecdir}/systemtap/*
 
 %dir %{_datadir}/systemtap
 %{_datadir}/systemtap/runtime
 %{_datadir}/systemtap/tapset
-
-%dir %attr(0755,root,root) /var/cache/systemtap
 
 %if %{bundled_elfutils}
 %dir %{_libdir}/%{name}
@@ -142,8 +143,16 @@ rm -rf ${RPM_BUILD_ROOT}
 %files runtime
 %defattr(-,root,root)
 %{_bindir}/staprun
+%{_libexecdir}/systemtap
+%{_mandir}/man8/*
+
+%doc README AUTHORS NEWS COPYING
 
 %changelog
+* Mon Mar 26 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.13-1
+- An emergency / preliminary refresh, mainly for compatibility
+  with 2.6.21-pre kernels.
+
 * Mon Jan  1 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.12-1
 - Many changes, see NEWS file.
 
