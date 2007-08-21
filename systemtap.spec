@@ -1,7 +1,7 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
 %define release 1
 # Version number of oldest elfutils release that works with systemtap.
-%define elfutils_version 0.125
+%define elfutils_version 0.128
 
 # Set bundled_elfutils to 0 on systems that have %{elfutils_version} or newer.
 %if 0%{?fedora}
@@ -13,7 +13,7 @@
 
 %if 0%{?rhel}
 %define bundled_elfutils 1
-%if "%rhel" >= "5"
+%if "%rhel" >= "6"
 %define bundled_elfutils 0
 %endif
 %endif
@@ -25,7 +25,7 @@
 %endif
 
 Name: systemtap
-Version: 0.5.13
+Version: 0.5.14
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
@@ -39,6 +39,7 @@ Requires: kernel >= 2.6.9-11
 BuildRequires: glib2-devel >= 2.0.0
 # make check
 BuildRequires: dejagnu
+BuildRequires: sqlite-devel
 Requires: glib2 >= 2.0.0
 # Requires: kernel-devel
 # or is that kernel-smp-devel?  kernel-hugemem-devel?
@@ -46,6 +47,7 @@ Requires: gcc make
 # Suggest: kernel-debuginfo
 Requires: systemtap-runtime = %{version}-%{release}
 Requires: sudo
+Requires: sqlite
 
 %if %{bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
@@ -54,6 +56,8 @@ Patch1: elfutils-portability.patch
 %else
 BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
+
+Patch2: elfutils-configury.patch
 
 %description
 SystemTap is an instrumentation system for systems running Linux 2.6.
@@ -82,8 +86,14 @@ sleep 1
 find . \( -name Makefile.in -o -name aclocal.m4 \) -print | xargs touch
 sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
+
+# XXX trivial patch for 0.128
+sed -i /ifndef/s/PACKAGE/PACKAGE_NAME/ libdwfl/libdwflP.h
+
 cd ..
 %endif
+
+%patch2 -p0
 
 %build
 
@@ -103,7 +113,7 @@ cd ..
 %endif
 
 %configure %{?elfutils_config}
-make %{?_smp_mflags} AM_CFLAGS="-D_GNU_SOURCE -fexceptions -Wall -Wextra"
+make %{?_smp_mflags}
 
 # Fix paths in the example scripts
 find examples -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
@@ -137,7 +147,7 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %if %{bundled_elfutils}
 %dir %{_libdir}/%{name}
-%{_libdir}/%{name}/lib*.so*
+%{_libdir}/%{name}/*.so*
 %endif
 
 %files runtime
@@ -149,6 +159,15 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc README AUTHORS NEWS COPYING
 
 %changelog
+* Tue Jul  2 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.14-1
+- Many robustness improvements: 1117, 1134, 1305, 1307, 1570, 1806,
+  2033, 2116, 2224, 2339, 2341, 2406, 2426, 2438, 2583, 3037,
+  3261, 3282, 3331, 3428 3519, 3545, 3625, 3648, 3880, 3888, 3911,
+  3952, 3965, 4066, 4071, 4075, 4078, 4081, 4096, 4119, 4122, 4127,
+  4146, 4171, 4179, 4183, 4221, 4224, 4254, 4281, 4319, 4323, 4326,
+  4329, 4332, 4337, 4415, 4432, 4444, 4445, 4458, 4467, 4470, 4471,
+  4518, 4567, 4570, 4579, 4589, 4609, 4664
+
 * Mon Mar 26 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.13-1
 - An emergency / preliminary refresh, mainly for compatibility
   with 2.6.21-pre kernels.
