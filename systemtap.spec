@@ -1,20 +1,24 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
 %define release 1
 # Version number of oldest elfutils release that works with systemtap.
-%define elfutils_version 0.128
+%define elfutils_version 0.127
 
 # Set bundled_elfutils to 0 on systems that have %{elfutils_version} or newer.
 %if 0%{?fedora}
 %define bundled_elfutils 1
+%define sqlite 0
 %if "%fedora" >= "6"
 %define bundled_elfutils 0
+%define sqlite 1
 %endif
 %endif
 
 %if 0%{?rhel}
 %define bundled_elfutils 1
-%if "%rhel" >= "6"
+%define sqlite 0
+%if "%rhel" >= "5"
 %define bundled_elfutils 0
+%define sqlite 1
 %endif
 %endif
 
@@ -24,30 +28,37 @@
 %define bundled_elfutils 1
 %endif
 
+%if 0%{!?sqlite:1}
+# Yo!  DO NOT TOUCH THE FOLLOWING LINE.
+# You can use rpmbuild --define "sqlite 1" for a build of your own.
+%define sqlite 0
+%endif
+
 Name: systemtap
-Version: 0.5.14
+Version: 0.6
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
-License: GPL
+License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/%{name}-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
-BuildRequires: glib2-devel >= 2.0.0
+BuildRequires: libcap-devel
 # make check
 BuildRequires: dejagnu
+%if %{sqlite}
 BuildRequires: sqlite-devel
-Requires: glib2 >= 2.0.0
+Requires: sqlite
+%endif
 # Requires: kernel-devel
 # or is that kernel-smp-devel?  kernel-hugemem-devel?
 Requires: gcc make
 # Suggest: kernel-debuginfo
 Requires: systemtap-runtime = %{version}-%{release}
-Requires: sudo
-Requires: sqlite
+Requires(pre): shadow-utils
 
 %if %{bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
@@ -57,8 +68,6 @@ Patch1: elfutils-portability.patch
 BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
 
-Patch2: elfutils-configury.patch
-
 %description
 SystemTap is an instrumentation system for systems running Linux 2.6.
 Developers can write instrumentation to collect data on the operation
@@ -67,7 +76,7 @@ of the system.
 %package runtime
 Summary: Instrumentation System Runtime
 Group: Development/System
-License: GPL
+License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: kernel >= 2.6.9-11
 
@@ -75,6 +84,17 @@ Requires: kernel >= 2.6.9-11
 SystemTap runtime is the runtime component of an instrumentation
 system for systems running Linux 2.6.  Developers can write
 instrumentation to collect data on the operation of the system.
+
+%package testsuite
+Summary: Instrumentation System Testsuite
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: systemtap dejagnu
+
+%description testsuite
+The testsuite allows testing of the entire SystemTap toolchain
+without having to rebuild from sources.
 
 %prep
 %setup -q %{?setup_elfutils}
@@ -86,14 +106,8 @@ sleep 1
 find . \( -name Makefile.in -o -name aclocal.m4 \) -print | xargs touch
 sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
-
-# XXX trivial patch for 0.128
-sed -i /ifndef/s/PACKAGE/PACKAGE_NAME/ libdwfl/libdwflP.h
-
 cd ..
 %endif
-
-%patch2 -p0
 
 %build
 
@@ -112,7 +126,12 @@ cd ..
 %define elfutils_mflags LD_LIBRARY_PATH=`pwd`/lib-elfutils
 %endif
 
-%configure %{?elfutils_config}
+%if %{sqlite}
+# Include the coverage testing support
+%define sqlite_config --enable-sqlitedb
+%endif
+
+%configure %{?elfutils_config} %{?sqlite_config}
 make %{?_smp_mflags}
 
 # Fix paths in the example scripts
@@ -125,11 +144,28 @@ chmod -x examples/samples/kmalloc-top
 rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
 
-%check
-make check %{?elfutils_mflags} || :
+# Because "make install" may install staprun with mode 04111, the
+# post-processing programs rpmbuild runs won't be able to read it.
+# So, we change permissions so that they can read it.  We'll set the
+# permissions back to 04111 in the %files section below.
+chmod 755 $RPM_BUILD_ROOT%{_bindir}/staprun
+
+# Copy over the testsuite
+cp -rp testsuite $RPM_BUILD_ROOT%{_datadir}/systemtap
+
+if [ -f $RPM_BUILD_ROOT%{_libdir}/%{name}/staplog.so ]; then
+	echo %{_libdir}/%{name}/staplog.so > runtime-addl-files.txt
+else
+	touch runtime-addl-files.txt
+fi
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
+
+%pre
+getent group stapdev >/dev/null || groupadd -r stapdev
+getent group stapusr >/dev/null || groupadd -r stapusr
+exit 0
 
 %files
 %defattr(-,root,root)
@@ -137,7 +173,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc README AUTHORS NEWS COPYING examples
 
 %{_bindir}/stap
-%{_bindir}/lket-b2a
 %{_mandir}/man1/*
 %{_mandir}/man5/*
 
@@ -147,18 +182,29 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %if %{bundled_elfutils}
 %dir %{_libdir}/%{name}
-%{_libdir}/%{name}/*.so*
+%{_libdir}/%{name}/lib*.so*
 %endif
 
-%files runtime
+%files runtime -f runtime-addl-files.txt
 %defattr(-,root,root)
-%{_bindir}/staprun
+%attr(4111,root,root) %{_bindir}/staprun
 %{_libexecdir}/systemtap
 %{_mandir}/man8/*
 
 %doc README AUTHORS NEWS COPYING
 
+%files testsuite
+%defattr(-,root,root)
+%{_datadir}/systemtap/testsuite
+
+
 %changelog
+* Thu Aug  9 2007 David Smith <dsmith@redhat.com> - 0.6-1
+- Bumped version, added libcap-devel BuildRequires.
+
+* Wed Jul 11 2007 Will Cohen <wcohen@redhat.com> - 0.5.14-2
+- Fix Requires and BuildRequires for sqlite.
+
 * Tue Jul  2 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.14-1
 - Many robustness improvements: 1117, 1134, 1305, 1307, 1570, 1806,
   2033, 2116, 2224, 2339, 2341, 2406, 2426, 2438, 2583, 3037,
