@@ -1,7 +1,10 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
 %define release 1
 # Version number of oldest elfutils release that works with systemtap.
-%define elfutils_version 0.127
+%define elfutils_version 0.131
+
+# Don't build on ppc for RHEL5
+ExcludeArch: ppc
 
 # Set bundled_elfutils to 0 on systems that have %{elfutils_version} or newer.
 %if 0%{?fedora}
@@ -16,7 +19,7 @@
 %if 0%{?rhel}
 %define bundled_elfutils 1
 %define sqlite 0
-%if "%rhel" >= "5"
+%if "%rhel" >= "6"
 %define bundled_elfutils 0
 %define sqlite 1
 %endif
@@ -35,23 +38,24 @@
 %endif
 
 Name: systemtap
-Version: 0.6
+Version: 0.6.1
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: ftp://sourceware.org/pub/%{name}/%{name}-%{version}.tar.gz
+Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
 BuildRequires: libcap-devel
-# make check
-BuildRequires: dejagnu
 %if %{sqlite}
 BuildRequires: sqlite-devel
 Requires: sqlite
+%endif
+%if "%rhel" >= "5"
+BuildRequires: crash-devel
 %endif
 # Requires: kernel-devel
 # or is that kernel-smp-devel?  kernel-hugemem-devel?
@@ -199,6 +203,13 @@ exit 0
 
 
 %changelog
+* Fri Jan 18 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-1
+- Add crash-devel buildreq to build staplog.so crash(8) module.
+- Many robustness & functionality improvements:
+
+* Wed Dec  5 2007 Will Cohen <wcohen@redhat.com> - 0.6-2
+- Correct Source to point to location contain code.
+
 * Thu Aug  9 2007 David Smith <dsmith@redhat.com> - 0.6-1
 - Bumped version, added libcap-devel BuildRequires.
 
