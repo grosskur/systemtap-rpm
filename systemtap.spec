@@ -1,5 +1,5 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
-%define release 1
+%define release 3
 # Version number of oldest elfutils release that works with systemtap.
 %define elfutils_version 0.131
 
@@ -55,7 +55,7 @@ BuildRequires: sqlite-devel
 Requires: sqlite
 %endif
 %if "%rhel" >= "5"
-BuildRequires: crash-devel
+BuildRequires: crash-devel zlib-devel
 %endif
 # Requires: kernel-devel
 # or is that kernel-smp-devel?  kernel-hugemem-devel?
@@ -138,8 +138,8 @@ cd ..
 %configure %{?elfutils_config} %{?sqlite_config}
 make %{?_smp_mflags}
 
-# Fix paths in the example scripts
-find examples -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
+# Fix paths in the example & testsuite scripts
+find examples testsuite -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
 
 # To avoid perl dependency, make perl sample script non-executable
 chmod -x examples/samples/kmalloc-top
@@ -203,6 +203,12 @@ exit 0
 
 
 %changelog
+* Fri Feb  1 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-3
+- Add zlib-devel dependency which is supposed to come from crash-devel.
+
+* Fri Feb  1 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-2
+- Process testsuite .stp files to fool "#! stap" dep. finder.
+
 * Fri Jan 18 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-1
 - Add crash-devel buildreq to build staplog.so crash(8) module.
 - Many robustness & functionality improvements:
