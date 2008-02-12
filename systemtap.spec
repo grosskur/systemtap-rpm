@@ -1,5 +1,5 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
-%define release 3
+%define release 4
 # Version number of oldest elfutils release that works with systemtap.
 %define elfutils_version 0.131
 
@@ -45,6 +45,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+Patch100: systemtap-0.6.1-gcc43.diff
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -102,6 +103,7 @@ without having to rebuild from sources.
 
 %prep
 %setup -q %{?setup_elfutils}
+%patch100 -p1
 
 %if %{bundled_elfutils}
 cd elfutils-%{elfutils_version}
@@ -203,6 +205,9 @@ exit 0
 
 
 %changelog
+* Tue Feb 12 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-4
+- Add patch for gcc 4.3.
+
 * Fri Feb  1 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-3
 - Add zlib-devel dependency which is supposed to come from crash-devel.
 
