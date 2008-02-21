@@ -1,5 +1,5 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
-%define release 4
+%define release 5
 # Version number of oldest elfutils release that works with systemtap.
 %define elfutils_version 0.131
 
@@ -46,6 +46,7 @@ License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 Patch100: systemtap-0.6.1-gcc43.diff
+Patch101: systemtap-0.6.1-elfi.diff
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -104,6 +105,7 @@ without having to rebuild from sources.
 %prep
 %setup -q %{?setup_elfutils}
 %patch100 -p1
+%patch101 -p0
 
 %if %{bundled_elfutils}
 cd elfutils-%{elfutils_version}
@@ -205,6 +207,9 @@ exit 0
 
 
 %changelog
+* Wed Feb 13 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-5
+- Correct elfi typo in runtime/stack-i386.c.
+
 * Tue Feb 12 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-4
 - Add patch for gcc 4.3.
 
