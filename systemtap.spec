@@ -1,5 +1,5 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
-%define release 6
+%define release 8
 # Version number of oldest elfutils release that works with systemtap.
 %define elfutils_version 0.131
 
@@ -207,6 +207,9 @@ exit 0
 
 
 %changelog
+* Wed Feb 21 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-8
+- Bump version.
+
 * Wed Feb 13 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-5
 - Correct elfi typo in runtime/stack-i386.c.
 
