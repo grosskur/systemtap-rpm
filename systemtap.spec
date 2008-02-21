@@ -1,5 +1,5 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
-%define release 5
+%define release 6
 # Version number of oldest elfutils release that works with systemtap.
 %define elfutils_version 0.131
 
@@ -45,8 +45,8 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Patch100: systemtap-0.6.1-gcc43.diff
-Patch101: systemtap-0.6.1-elfi.diff
+Patch100: systemtap-0.6.1-gcc43.patch
+Patch101: systemtap-0.6.1-elfi.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
