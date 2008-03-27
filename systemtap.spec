@@ -1,62 +1,39 @@
 # Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
-%define release 8
+%define release 1
 # Version number of oldest elfutils release that works with systemtap.
 %define elfutils_version 0.131
 
-# Don't build on ppc for RHEL5
-ExcludeArch: ppc
+# Default options (suitable for fedora)
+%define with_sqlite 1
+%define with_docs 1
+%define with_crash 0
+%define with_bundled_elfutils 0
 
-# Set bundled_elfutils to 0 on systems that have %{elfutils_version} or newer.
-%if 0%{?fedora}
-%define bundled_elfutils 1
-%define sqlite 0
-%if "%fedora" >= "6"
-%define bundled_elfutils 0
-%define sqlite 1
-%endif
-%endif
-
-%if 0%{?rhel}
-%define bundled_elfutils 1
-%define sqlite 0
-%if "%rhel" >= "6"
-%define bundled_elfutils 0
-%define sqlite 1
-%endif
-%endif
-
-%if 0%{!?bundled_elfutils:1}
-# Yo!  DO NOT TOUCH THE FOLLOWING LINE.
-# You can use rpmbuild --define "bundled_elfutils 0" for a build of your own.
-%define bundled_elfutils 1
-%endif
-
-%if 0%{!?sqlite:1}
-# Yo!  DO NOT TOUCH THE FOLLOWING LINE.
-# You can use rpmbuild --define "sqlite 1" for a build of your own.
-%define sqlite 0
+# Enable these options by default for RHEL
+%if 0%{?rhel} >= 5
+%define with_crash 1
+%define with_bundled_elfutils 1
 %endif
 
 Name: systemtap
-Version: 0.6.1
+Version: 0.6.2
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
+ExcludeArch: ppc
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Patch100: systemtap-0.6.1-gcc43.patch
-Patch101: systemtap-0.6.1-elfi.patch
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
 BuildRequires: libcap-devel
-%if %{sqlite}
+%if %{with_sqlite}
 BuildRequires: sqlite-devel
 Requires: sqlite
 %endif
-%if "%rhel" >= "5"
+%if %{with_crash}
 BuildRequires: crash-devel zlib-devel
 %endif
 # Requires: kernel-devel
@@ -64,14 +41,20 @@ BuildRequires: crash-devel zlib-devel
 Requires: gcc make
 # Suggest: kernel-debuginfo
 Requires: systemtap-runtime = %{version}-%{release}
-Requires(pre): shadow-utils
 
-%if %{bundled_elfutils}
+%if %{with_bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
 Patch1: elfutils-portability.patch
 %define setup_elfutils -a1
 %else
 BuildRequires: elfutils-devel >= %{elfutils_version}
+%endif
+%if %{with_crash}
+Requires: crash
+%endif
+
+%if %{with_docs}
+BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 %endif
 
 %description
@@ -85,6 +68,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: kernel >= 2.6.9-11
+Requires(pre): shadow-utils
 
 %description runtime
 SystemTap runtime is the runtime component of an instrumentation
@@ -104,10 +88,8 @@ without having to rebuild from sources.
 
 %prep
 %setup -q %{?setup_elfutils}
-%patch100 -p1
-%patch101 -p0
 
-%if %{bundled_elfutils}
+%if %{with_bundled_elfutils}
 cd elfutils-%{elfutils_version}
 %patch1 -p1
 sleep 1
@@ -119,7 +101,7 @@ cd ..
 
 %build
 
-%if %{bundled_elfutils}
+%if %{with_bundled_elfutils}
 # Build our own copy of elfutils.
 %define elfutils_config --with-elfutils=elfutils-%{elfutils_version}
 
@@ -134,12 +116,29 @@ cd ..
 %define elfutils_mflags LD_LIBRARY_PATH=`pwd`/lib-elfutils
 %endif
 
-%if %{sqlite}
-# Include the coverage testing support
-%define sqlite_config --enable-sqlitedb
+# Enable/disable the sqlite coverage testing support
+%if %{with_sqlite}
+%define sqlite_config --enable-sqlite
+%else
+%define sqlite_config --disable-sqlite
 %endif
 
-%configure %{?elfutils_config} %{?sqlite_config}
+# Enable/disable the crash extension
+%if %{with_crash}
+%define crash_config --enable-crash
+%else
+%define crash_config --disable-crash
+%endif
+
+%if %{with_docs}
+%define docs_config --enable-docs
+%else
+%define docs_config --disable-docs
+%endif
+
+
+
+%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config}
 make %{?_smp_mflags}
 
 # Fix paths in the example & testsuite scripts
@@ -160,17 +159,13 @@ chmod 755 $RPM_BUILD_ROOT%{_bindir}/staprun
 
 # Copy over the testsuite
 cp -rp testsuite $RPM_BUILD_ROOT%{_datadir}/systemtap
-
-if [ -f $RPM_BUILD_ROOT%{_libdir}/%{name}/staplog.so ]; then
-	echo %{_libdir}/%{name}/staplog.so > runtime-addl-files.txt
-else
-	touch runtime-addl-files.txt
-fi
+mkdir $RPM_BUILD_ROOT%{_datadir}/%{name}/src
+cp -rp examples $RPM_BUILD_ROOT%{_datadir}/%{name}/src
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
 
-%pre
+%pre runtime
 getent group stapdev >/dev/null || groupadd -r stapdev
 getent group stapusr >/dev/null || groupadd -r stapusr
 exit 0
@@ -179,34 +174,47 @@ exit 0
 %defattr(-,root,root)
 
 %doc README AUTHORS NEWS COPYING examples
+%if %{with_docs}
+%doc doc/tutorial.pdf
+%doc doc/langref.pdf
+%endif
 
 %{_bindir}/stap
 %{_mandir}/man1/*
 %{_mandir}/man5/*
 
-%dir %{_datadir}/systemtap
-%{_datadir}/systemtap/runtime
-%{_datadir}/systemtap/tapset
+%dir %{_datadir}/%{name}
+%{_datadir}/%{name}/runtime
+%{_datadir}/%{name}/tapset
 
-%if %{bundled_elfutils}
+%if %{with_bundled_elfutils} || %{with_crash}
 %dir %{_libdir}/%{name}
+%endif
+%if %{with_bundled_elfutils}
 %{_libdir}/%{name}/lib*.so*
 %endif
+%if %{with_crash}
+%{_libdir}/%{name}/staplog.so*
+%endif
 
-%files runtime -f runtime-addl-files.txt
+%files runtime
 %defattr(-,root,root)
 %attr(4111,root,root) %{_bindir}/staprun
-%{_libexecdir}/systemtap
+%{_libexecdir}/%{name}
 %{_mandir}/man8/*
 
 %doc README AUTHORS NEWS COPYING
 
 %files testsuite
 %defattr(-,root,root)
-%{_datadir}/systemtap/testsuite
+%{_datadir}/%{name}/src
+%{_datadir}/%{name}/testsuite
 
 
 %changelog
+* Thu Mar 27 2008 Will Cohen <wcohen@redhat.com> - 0.6.2-1
+- Rebase.
+
 * Wed Feb 21 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-8
 - Bump version.
 
