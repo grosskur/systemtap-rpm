@@ -1,26 +1,15 @@
-# Release number for rpm build.  Stays at 1 for new PACKAGE_VERSION increases.
 %define release 1
-# Version number of oldest elfutils release that works with systemtap.
-%define elfutils_version 0.131
-
-# Default options (suitable for fedora)
 %define with_sqlite 1
 %define with_docs 1
 %define with_crash 0
 %define with_bundled_elfutils 0
-
-# Enable these options by default for RHEL
-%if 0%{?rhel} >= 5
-%define with_crash 1
-%define with_bundled_elfutils 1
-%endif
+%define elfutils_version 0.127
 
 Name: systemtap
-Version: 0.6.2
+Version: 0.7
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
-ExcludeArch: ppc
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
@@ -141,15 +130,18 @@ cd ..
 %configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config}
 make %{?_smp_mflags}
 
+%install
+rm -rf ${RPM_BUILD_ROOT}
+make DESTDIR=$RPM_BUILD_ROOT install
+
+# We want the examples in the special doc dir, not the generoc doc install dir.
+mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/examples examples
+
 # Fix paths in the example & testsuite scripts
 find examples testsuite -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
 
 # To avoid perl dependency, make perl sample script non-executable
 chmod -x examples/samples/kmalloc-top
-
-%install
-rm -rf ${RPM_BUILD_ROOT}
-make DESTDIR=$RPM_BUILD_ROOT install
 
 # Because "make install" may install staprun with mode 04111, the
 # post-processing programs rpmbuild runs won't be able to read it.
@@ -159,8 +151,12 @@ chmod 755 $RPM_BUILD_ROOT%{_bindir}/staprun
 
 # Copy over the testsuite
 cp -rp testsuite $RPM_BUILD_ROOT%{_datadir}/systemtap
-mkdir $RPM_BUILD_ROOT%{_datadir}/%{name}/src
-cp -rp examples $RPM_BUILD_ROOT%{_datadir}/%{name}/src
+
+#%if %{with_docs}
+# We want the manuals in the special doc dir, not the generic doc install dir.
+mkdir docs.installed
+mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/*.pdf docs.installed/
+#%endif
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
@@ -175,8 +171,7 @@ exit 0
 
 %doc README AUTHORS NEWS COPYING examples
 %if %{with_docs}
-%doc doc/tutorial.pdf
-%doc doc/langref.pdf
+%doc docs.installed/*.pdf
 %endif
 
 %{_bindir}/stap
@@ -207,28 +202,16 @@ exit 0
 
 %files testsuite
 %defattr(-,root,root)
-%{_datadir}/%{name}/src
 %{_datadir}/%{name}/testsuite
 
 
 %changelog
-* Thu Mar 27 2008 Will Cohen <wcohen@redhat.com> - 0.6.2-1
-- Rebase.
-
-* Wed Feb 21 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-8
-- Bump version.
-
-* Wed Feb 13 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-5
-- Correct elfi typo in runtime/stack-i386.c.
-
-* Tue Feb 12 2008 Will Cohen <wcohen@redhat.com> - 0.6.1-4
-- Add patch for gcc 4.3.
+* Tue Jul 15 2008 Frank Ch. Eigler <fche@redhat.com> - 0.7-1
+- Upstream release.
 
 * Fri Feb  1 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-3
-- Add zlib-devel dependency which is supposed to come from crash-devel.
-
-* Fri Feb  1 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-2
-- Process testsuite .stp files to fool "#! stap" dep. finder.
+- Add zlib-devel to buildreq; missing from crash-devel
+- Process testsuite .stp files for #!stap->#!/usr/bin/stap
 
 * Fri Jan 18 2008 Frank Ch. Eigler <fche@redhat.com> - 0.6.1-1
 - Add crash-devel buildreq to build staplog.so crash(8) module.
