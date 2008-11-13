@@ -1,12 +1,13 @@
-%define release 1
-%define with_sqlite 1
-%define with_docs 1
-%define with_crash 0
-%define with_bundled_elfutils 0
-%define elfutils_version 0.127
+%{!?release: %define release 1}
+%{!?with_sqllite: %define with_sqlite 1}
+%{!?with_docs: %define with_docs 1}
+%{!?with_crash: %define with_crash 0}
+%{!?with_bundled_elfutils: %define with_bundled_elfutils 0}
+%{!?elfutils_version: %define elfutils_version 0.127}
 
 Name: systemtap
-Version: 0.7
+# for version, see also configure.ac
+Version: 0.8
 Release: %{release}%{?dist}
 Summary: Instrumentation System
 Group: Development/System
@@ -17,7 +18,6 @@ Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
-BuildRequires: libcap-devel
 %if %{with_sqlite}
 BuildRequires: sqlite-devel
 Requires: sqlite
@@ -74,6 +74,32 @@ Requires: systemtap dejagnu
 %description testsuite
 The testsuite allows testing of the entire SystemTap toolchain
 without having to rebuild from sources.
+
+%package client
+Summary: Instrumentation System Client
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: systemtap-runtime = %{version}-%{release}
+Requires: avahi avahi-tools nc mktemp
+
+%description client
+SystemTap client is the client component of an instrumentation
+system for systems running Linux 2.6.  Developers can write
+instrumentation to collect data on the operation of the system.
+
+%package server
+Summary: Instrumentation System Server
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: systemtap
+Requires: avahi avahi-tools nc net-tools mktemp
+
+%description server
+SystemTap server is the server component of an instrumentation
+system for systems running Linux 2.6.  Developers can write
+instrumentation to collect data on the operation of the system.
 
 %prep
 %setup -q %{?setup_elfutils}
@@ -134,14 +160,14 @@ make %{?_smp_mflags}
 rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
 
-# We want the examples in the special doc dir, not the generoc doc install dir.
+# We want the examples in the special doc dir, not the build install dir.
+# We build it in place and then move it away so it doesn't get installed
+# twice. rpm can specify itself where the (versioned) docs go with the
+# %doc directive.
 mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/examples examples
 
 # Fix paths in the example & testsuite scripts
 find examples testsuite -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
-
-# To avoid perl dependency, make perl sample script non-executable
-chmod -x examples/samples/kmalloc-top
 
 # Because "make install" may install staprun with mode 04111, the
 # post-processing programs rpmbuild runs won't be able to read it.
@@ -152,11 +178,14 @@ chmod 755 $RPM_BUILD_ROOT%{_bindir}/staprun
 # Copy over the testsuite
 cp -rp testsuite $RPM_BUILD_ROOT%{_datadir}/systemtap
 
-#%if %{with_docs}
+%if %{with_docs}
 # We want the manuals in the special doc dir, not the generic doc install dir.
+# We build it in place and then move it away so it doesn't get installed
+# twice. rpm can specify itself where the (versioned) docs go with the
+# %doc directive.
 mkdir docs.installed
 mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/*.pdf docs.installed/
-#%endif
+%endif
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
@@ -175,6 +204,7 @@ exit 0
 %endif
 
 %{_bindir}/stap
+%{_bindir}/stap-report
 %{_mandir}/man1/*
 %{_mandir}/man5/*
 
@@ -195,8 +225,9 @@ exit 0
 %files runtime
 %defattr(-,root,root)
 %attr(4111,root,root) %{_bindir}/staprun
+%{_bindir}/stap-report
 %{_libexecdir}/%{name}
-%{_mandir}/man8/*
+%{_mandir}/man8/staprun.8*
 
 %doc README AUTHORS NEWS COPYING
 
@@ -204,8 +235,25 @@ exit 0
 %defattr(-,root,root)
 %{_datadir}/%{name}/testsuite
 
+%files client
+%defattr(-,root,root)
+%{_bindir}/stap-client
+%{_bindir}/stap-find-servers
+%{_bindir}/stap-find-or-start-server
+%{_mandir}/man8/stap-server.8*
+
+%files server
+%defattr(-,root,root)
+%{_bindir}/stap-server
+%{_bindir}/stap-serverd
+%{_bindir}/stap-start-server
+%{_bindir}/stap-stop-server
+%{_mandir}/man8/stap-server.8*
 
 %changelog
+* Thu Nov 13 2008 Frank Ch. Eigler <fche@redhat.com> - 0.8-1
+- Upstream release.
+
 * Tue Jul 15 2008 Frank Ch. Eigler <fche@redhat.com> - 0.7-1
 - Upstream release.
 
