@@ -210,7 +210,7 @@ cp -rp testsuite $RPM_BUILD_ROOT%{_datadir}/systemtap
 # %doc directive.
 mkdir docs.installed
 mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/*.pdf docs.installed/
-#mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/tapsets docs.installed/
+mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/tapsets docs.installed/
 %endif
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/init.d/
@@ -245,7 +245,7 @@ exit 0
 %doc README AUTHORS NEWS COPYING examples
 %if %{with_docs}
 %doc docs.installed/*.pdf
-#%doc docs.installed/tapsets
+%doc docs.installed/tapsets
 %endif
 
 %{_bindir}/stap
