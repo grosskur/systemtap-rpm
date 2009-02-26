@@ -8,7 +8,7 @@
 Name: systemtap
 # for version, see also configure.ac
 Version: 0.9
-Release: %{release}%{?dist}
+Release: %{release}%{?dist}.1
 Summary: Instrumentation System
 Group: Development/System
 License: GPLv2+
@@ -317,6 +317,9 @@ exit 0
 
 
 %changelog
+* Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9-1.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
 * Tue Feb 17 2009 Frank Ch. Eigler <fche@redhat.com> - 0.9-1
 - Upstream release.
 
