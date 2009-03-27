@@ -1,14 +1,14 @@
-%{!?release: %define release 1}
 %{!?with_sqlite: %define with_sqlite 1}
 %{!?with_docs: %define with_docs 1}
 %{!?with_crash: %define with_crash 0}
 %{!?with_bundled_elfutils: %define with_bundled_elfutils 0}
 %{!?elfutils_version: %define elfutils_version 0.127}
+%{!?pie_supported: %define pie_supported 1}
 
 Name: systemtap
+Version: 0.9.5
+Release: 1%{?dist}
 # for version, see also configure.ac
-Version: 0.9
-Release: %{release}%{?dist}.1
 Summary: Instrumentation System
 Group: Development/System
 License: GPLv2+
@@ -176,9 +176,15 @@ cd ..
 %define docs_config --disable-docs
 %endif
 
+# Enable pie as configure defaults to disabling it
+%if %{pie_supported}
+%define pie_config --enable-pie
+%else
+%define pie_config --disable-pie
+%endif
 
 
-%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config}
+%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config}
 make %{?_smp_mflags}
 
 %install
@@ -251,7 +257,7 @@ exit 0
 %{_bindir}/stap
 %{_bindir}/stap-report
 %{_mandir}/man1/*
-%{_mandir}/man5/*
+%{_mandir}/man3/*
 
 %dir %{_datadir}/%{name}
 %{_datadir}/%{name}/runtime
@@ -317,8 +323,11 @@ exit 0
 
 
 %changelog
-* Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9-1.1
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+* Fri Mar 27 2009 Josh Stone <jistone@redhat.com> - 0.9.5-1
+- Upstream release.
+
+* Wed Mar 18 2009 Will Cohen <wcohen@redhat.com> - 0.9-2
+- Add location of man pages.
 
 * Tue Feb 17 2009 Frank Ch. Eigler <fche@redhat.com> - 0.9-1
 - Upstream release.
