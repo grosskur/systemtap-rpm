@@ -1,12 +1,14 @@
 %{!?with_sqlite: %define with_sqlite 1}
 %{!?with_docs: %define with_docs 1}
 %{!?with_crash: %define with_crash 0}
+%{!?with_rpm: %define with_rpm 1}
 %{!?with_bundled_elfutils: %define with_bundled_elfutils 0}
 %{!?elfutils_version: %define elfutils_version 0.127}
 %{!?pie_supported: %define pie_supported 1}
+%{!?with_grapher: %define with_grapher 0}
 
 Name: systemtap
-Version: 0.9.7
+Version: 0.9.8
 Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
@@ -24,17 +26,21 @@ BuildRequires: sqlite-devel
 %if %{with_crash}
 BuildRequires: crash-devel zlib-devel
 %endif
+%if %{with_rpm}
+BuildRequires: rpm-devel glibc-headers
+%endif
 # Alternate kernel packages kernel-PAE-devel et al have a virtual
 # provide for kernel-devel, so this requirement does the right thing.
 Requires: kernel-devel
 Requires: gcc make
 # Suggest: kernel-debuginfo
 Requires: systemtap-runtime = %{version}-%{release}
-BuildRequires: nss-devel
+BuildRequires: nss-devel nss-tools pkgconfig
 
 %if %{with_bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
 Patch1: elfutils-portability.patch
+BuildRequires: m4
 %define setup_elfutils -a1
 %else
 BuildRequires: elfutils-devel >= %{elfutils_version}
@@ -111,7 +117,6 @@ Summary: Static probe support tools
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: systemtap
 
 %description sdt-devel
 Support tools to allow applications to use static probes.
@@ -170,6 +175,13 @@ cd ..
 %define crash_config --disable-crash
 %endif
 
+# Enable/disable the code to find and suggest needed rpms
+%if %{with_rpm}
+%define rpm_config --with-rpm
+%else
+%define rpm_config --without-rpm
+%endif
+
 %if %{with_docs}
 %define docs_config --enable-docs
 %else
@@ -183,8 +195,14 @@ cd ..
 %define pie_config --disable-pie
 %endif
 
+%if %{with_grapher}
+%define grapher_config --enable-grapher
+%else
+%define grapher_config --disable-grapher
+%endif
 
-%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config}
+
+%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{grapher_config} %{rpm_config}
 make %{?_smp_mflags}
 
 %install
@@ -244,6 +262,13 @@ exit 0
 chkconfig --del systemtap
 exit 0
 
+%post
+# Remove any previously-built uprobes.ko materials
+(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 3>&1 || true
+
+%preun
+# Ditto
+(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 3>&1 || true
 
 %files
 %defattr(-,root,root)
@@ -256,6 +281,10 @@ exit 0
 
 %{_bindir}/stap
 %{_bindir}/stap-report
+%{_bindir}/stap-env
+%{_bindir}/stap-gen-cert
+%{_bindir}/stap-authorize-cert
+%{_bindir}/stap-authorize-signing-cert
 %{_mandir}/man1/*
 %{_mandir}/man3/*
 
@@ -289,9 +318,8 @@ exit 0
 %files client
 %defattr(-,root,root)
 %{_bindir}/stap-client
+%{_bindir}/stap-env
 %{_bindir}/stap-find-servers
-%{_bindir}/stap-find-or-start-server
-%{_bindir}/stap-add-server-cert
 %{_bindir}/stap-client-connect
 %{_mandir}/man8/stap-server.8*
 
@@ -299,9 +327,14 @@ exit 0
 %defattr(-,root,root)
 %{_bindir}/stap-server
 %{_bindir}/stap-serverd
+%{_bindir}/stap-env
 %{_bindir}/stap-start-server
+%{_bindir}/stap-find-servers
+%{_bindir}/stap-find-or-start-server
 %{_bindir}/stap-stop-server
-%{_bindir}/stap-gen-server-cert
+%{_bindir}/stap-gen-cert
+%{_bindir}/stap-authorize-cert
+%{_bindir}/stap-authorize-server-cert
 %{_bindir}/stap-server-connect
 %{_mandir}/man8/stap-server.8*
 
@@ -323,6 +356,9 @@ exit 0
 
 
 %changelog
+* Thu Jun 11 2009 Josh Stone <jistone@redhat.com> - 0.9.8-1
+- Upstream release.
+
 * Thu Apr 23 2009 Josh Stone <jistone@redhat.com> - 0.9.7-1
 - Upstream release.
 
