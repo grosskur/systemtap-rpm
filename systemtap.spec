@@ -9,7 +9,7 @@
 
 Name: systemtap
 Version: 0.9.8
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -356,6 +356,9 @@ exit 0
 
 
 %changelog
+* Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9.8-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
 * Thu Jun 11 2009 Josh Stone <jistone@redhat.com> - 0.9.8-1
 - Upstream release.
 
