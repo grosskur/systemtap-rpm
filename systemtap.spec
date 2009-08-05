@@ -9,7 +9,7 @@
 
 Name: systemtap
 Version: 0.9.9
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -381,6 +381,9 @@ exit 0
 
 
 %changelog
+* Tue Aug  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-2
+- Rebuild with correct sources.
+
 * Tue Aug  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-1
 - Upstream release.
 
