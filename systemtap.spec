@@ -5,11 +5,11 @@
 %{!?with_bundled_elfutils: %define with_bundled_elfutils 0}
 %{!?elfutils_version: %define elfutils_version 0.127}
 %{!?pie_supported: %define pie_supported 1}
-%{!?with_grapher: %define with_grapher 0}
+%{!?with_grapher: %define with_grapher 1}
 
 Name: systemtap
-Version: 0.9.8
-Release: 2%{?dist}
+Version: 0.9.9
+Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -57,6 +57,10 @@ BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %endif
 
+%if %{with_grapher}
+BuildRequires: gtkmm24-devel >= 2.8
+%endif
+
 %description
 SystemTap is an instrumentation system for systems running Linux 2.6.
 Developers can write instrumentation to collect data on the operation
@@ -80,7 +84,7 @@ Summary: Instrumentation System Testsuite
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: systemtap dejagnu
+Requires: systemtap systemtap-sdt-devel dejagnu
 
 %description testsuite
 The testsuite allows testing of the entire SystemTap toolchain
@@ -130,6 +134,19 @@ Requires: systemtap-runtime, initscripts
 
 %description initscript
 Initscript for Systemtap scripts.
+
+%if %{with_grapher}
+%package grapher
+Summary: Instrumentation System Grapher
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: systemtap-runtime
+
+%description grapher
+SystemTap grapher is a utility for real-time visualization of
+data from SystemTap instrumentation scripts.
+%endif
 
 %prep
 %setup -q %{?setup_elfutils}
@@ -265,10 +282,12 @@ exit 0
 %post
 # Remove any previously-built uprobes.ko materials
 (make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 3>&1 || true
+(/sbin/rmmod uprobes) >/dev/null 3>&1 || true
 
 %preun
 # Ditto
 (make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 3>&1 || true
+(/sbin/rmmod uprobes) >/dev/null 3>&1 || true
 
 %files
 %defattr(-,root,root)
@@ -354,10 +373,16 @@ exit 0
 %dir %{_localstatedir}/run/systemtap
 %doc initscript/README.initscript
 
+%if %{with_grapher}
+%files grapher
+%defattr(-,root,root)
+%{_bindir}/stapgraph
+%endif
+
 
 %changelog
-* Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9.8-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+* Tue Aug  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-1
+- Upstream release.
 
 * Thu Jun 11 2009 Josh Stone <jistone@redhat.com> - 0.9.8-1
 - Upstream release.
