@@ -9,7 +9,7 @@
 
 Name: systemtap
 Version: 0.9.9
-Release: 2%{?dist}
+Release: 3%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -281,13 +281,13 @@ exit 0
 
 %post
 # Remove any previously-built uprobes.ko materials
-(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 3>&1 || true
-(/sbin/rmmod uprobes) >/dev/null 3>&1 || true
+(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 2>&1 || true
+(/sbin/rmmod uprobes) >/dev/null 2>&1 || true
 
 %preun
 # Ditto
-(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 3>&1 || true
-(/sbin/rmmod uprobes) >/dev/null 3>&1 || true
+(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 2>&1 || true
+(/sbin/rmmod uprobes) >/dev/null 2>&1 || true
 
 %files
 %defattr(-,root,root)
@@ -381,6 +381,10 @@ exit 0
 
 
 %changelog
+* Wed Aug 12 2009 Josh Stone <jistone@redhat.com> - 0.9.9-3
+- Fix uprobes error suppression in %post and %preun (#515870)
+  (upstream commit 70f2bd1fc3db8e2b555234d45e6bc3856d8afee5)
+
 * Tue Aug  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-2
 - Rebuild with correct sources.
 
