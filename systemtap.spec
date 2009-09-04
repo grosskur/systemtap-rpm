@@ -9,7 +9,7 @@
 
 Name: systemtap
 Version: 0.9.9
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -48,6 +48,8 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 %if %{with_crash}
 Requires: crash
 %endif
+
+Patch2: dtrace-default-output-path.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -160,6 +162,8 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+
+%patch2 -p1
 
 %build
 
@@ -381,6 +385,9 @@ exit 0
 
 
 %changelog
+* Fri Sep  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-4
+- Fix the default output path of dtrace (upstream commit 3a45db13)
+
 * Wed Aug 12 2009 Josh Stone <jistone@redhat.com> - 0.9.9-3
 - Fix uprobes error suppression in %post and %preun (#515870)
   (upstream commit 70f2bd1fc3db8e2b555234d45e6bc3856d8afee5)

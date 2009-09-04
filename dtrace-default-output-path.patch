@@ -1,0 +1,20 @@
+commit 1b8fc7c8a443c0a8982133da6cc22a0c986a4ad4
+Author: Stan Cox <scox@redhat.com>
+Date:   Fri Aug 28 17:16:00 2009 -0400
+
+    Have dtrace use [wd] as the default dir when -o isn't given.
+    
+    * dtrace.in: Generate the output file from basename of input filename.
+
+diff --git a/dtrace.in b/dtrace.in
+index 168bfb1..5365c31 100755
+--- a/dtrace.in
++++ b/dtrace.in
+@@ -162,6 +162,7 @@ if (build_header == False and build_source == False):
+ if (filename == ""):
+     if (s_filename != ""):
+ 	(filename,ext) = os.path.splitext(s_filename)
++        filename = os.path.basename(filename)
+     else:
+         usage
+         sys.exit(1)
