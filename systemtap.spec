@@ -8,8 +8,8 @@
 %{!?with_grapher: %define with_grapher 1}
 
 Name: systemtap
-Version: 0.9.9
-Release: 4%{?dist}
+Version: 1.0
+Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -49,8 +49,6 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 Requires: crash
 %endif
 
-Patch2: dtrace-default-output-path.patch
-
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 # On F10, xmlto's pdf support was broken off into a sub-package,
@@ -86,7 +84,7 @@ Summary: Instrumentation System Testsuite
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: systemtap systemtap-sdt-devel dejagnu
+Requires: systemtap systemtap-sdt-devel dejagnu which
 
 %description testsuite
 The testsuite allows testing of the entire SystemTap toolchain
@@ -99,11 +97,13 @@ License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: systemtap-runtime = %{version}-%{release}
 Requires: avahi avahi-tools nss nss-tools mktemp
+Requires: zip unzip
 
 %description client
-SystemTap client is the client component of an instrumentation
-system for systems running Linux 2.6.  Developers can write
-instrumentation to collect data on the operation of the system.
+This is the remote script compilation client component of systemtap.
+It relies on a nearby compilation server to translate systemtap
+scripts to kernel objects, so a client workstation only needs the
+runtime, and not the compiler/etc toolchain.
 
 %package server
 Summary: Instrumentation System Server
@@ -112,11 +112,12 @@ License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: systemtap
 Requires: avahi avahi-tools nss nss-tools mktemp
+Requires: zip unzip
 
 %description server
-SystemTap server is the server component of an instrumentation
-system for systems running Linux 2.6.  Developers can write
-instrumentation to collect data on the operation of the system.
+This is the remote script compilation server component of systemtap.
+It announces itself to local clients with avahi, and compiles systemtap
+scripts to kernel objects on their demand.
 
 %package sdt-devel
 Summary: Static probe support tools
@@ -162,8 +163,6 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
-
-%patch2 -p1
 
 %build
 
@@ -343,6 +342,8 @@ exit 0
 %{_bindir}/stap-client
 %{_bindir}/stap-env
 %{_bindir}/stap-find-servers
+%{_bindir}/stap-authorize-cert
+%{_bindir}/stap-authorize-server-cert
 %{_bindir}/stap-client-connect
 %{_mandir}/man8/stap-server.8*
 
@@ -359,6 +360,7 @@ exit 0
 %{_bindir}/stap-authorize-cert
 %{_bindir}/stap-authorize-server-cert
 %{_bindir}/stap-server-connect
+%{_bindir}/stap-sign-module
 %{_mandir}/man8/stap-server.8*
 
 %files sdt-devel
@@ -385,15 +387,8 @@ exit 0
 
 
 %changelog
-* Fri Sep  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-4
-- Fix the default output path of dtrace (upstream commit 3a45db13)
-
-* Wed Aug 12 2009 Josh Stone <jistone@redhat.com> - 0.9.9-3
-- Fix uprobes error suppression in %post and %preun (#515870)
-  (upstream commit 70f2bd1fc3db8e2b555234d45e6bc3856d8afee5)
-
-* Tue Aug  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-2
-- Rebuild with correct sources.
+* Tue Sep 22 2009 Josh Stone <jistone@redhat.com> - 1.0-1
+- Upstream release.
 
 * Tue Aug  4 2009 Josh Stone <jistone@redhat.com> - 0.9.9-1
 - Upstream release.
