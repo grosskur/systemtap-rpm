@@ -9,7 +9,7 @@
 
 Name: systemtap
 Version: 1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -60,6 +60,11 @@ BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %if %{with_grapher}
 BuildRequires: gtkmm24-devel >= 2.8
 %endif
+
+# Fix three --unprivileged DOS issues (CVE-2009-2911)
+Patch10: SystemTap-1.0-limit-printf-arguments.patch
+Patch11: SystemTap-1.0-limit-dwarf-expression-stack-size.patch
+Patch12: SystemTap-1.0-unwind-table-size-checks.patch
 
 %description
 SystemTap is an instrumentation system for systems running Linux 2.6.
@@ -163,6 +168,11 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+
+# Fix three --unprivileged DOS issues (CVE-2009-2911)
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
 
 %build
 
@@ -387,6 +397,9 @@ exit 0
 
 
 %changelog
+* Wed Oct 21 2009 Josh Stone <jistone@redhat.com> - 1.0-2
+- Fix three --unprivileged DOS issues (CVE-2009-2911)
+
 * Tue Sep 22 2009 Josh Stone <jistone@redhat.com> - 1.0-1
 - Upstream release.
 
