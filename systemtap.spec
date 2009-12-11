@@ -9,7 +9,7 @@
 
 Name: systemtap
 Version: 1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -397,6 +397,9 @@ exit 0
 
 
 %changelog
+* Fri Dec 11 2009 Josh Stone <jistone@redhat.com> - 1.0-3
+- Rebuild against rpm-4.8.0
+
 * Wed Oct 21 2009 Josh Stone <jistone@redhat.com> - 1.0-2
 - Fix three --unprivileged DOS issues (CVE-2009-2911)
 
