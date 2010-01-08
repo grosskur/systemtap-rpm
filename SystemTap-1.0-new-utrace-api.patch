@@ -1,0 +1,494 @@
+From b8b815b7163b3df61a7364e404a282cb17d775db Mon Sep 17 00:00:00 2001
+From: David Smith <dsmith@redhat.com>
+Date: Mon, 21 Dec 2009 21:04:36 -0600
+Subject: [PATCH] PR11113 fix.  Support new utrace API.
+
+* tapset-utrace.cxx (utrace_derived_probe_group::emit_module_decls):
+  Handles new utrace api.
+* runtime/itrace.c (usr_itrace_report_signal): Ditto.
+  (usr_itrace_report_clone): Ditto.
+  (usr_itrace_report_death): Ditto.
+* runtime/task_finder.c (__stp_utrace_task_finder_report_clone): Ditto.
+  (__stp_utrace_task_finder_report_exec): Ditto.
+  (__stap_utrace_task_finder_report_death): Ditto.
+  (__stp_utrace_task_finder_target_death): Ditto.
+  (__stp_utrace_task_finder_target_quiesce): Ditto.
+  (__stp_utrace_task_finder_target_syscall_entry): Ditto.
+  (__stp_utrace_task_finder_target_syscall_exit): Ditto.
+* runtime/uprobes2/uprobes.c (uprobe_report_signal): Ditto.
+  (uprobe_report_quiesce): Ditto.
+  (uprobe_report_exit): Ditto.
+  (uprobe_report_clone): Ditto.
+  (uprobe_report_exec): Ditto.
+---
+ runtime/itrace.c           |   30 ++++++++++++++
+ runtime/task_finder.c      |   94 ++++++++++++++++++++++++++++++++++++++++++++
+ runtime/uprobes2/uprobes.c |   35 ++++++++++++++--
+ tapset-utrace.cxx          |    4 ++
+ 4 files changed, 159 insertions(+), 4 deletions(-)
+
+diff --git a/runtime/itrace.c b/runtime/itrace.c
+index 5b2437a..399bfde 100644
+--- a/runtime/itrace.c
++++ b/runtime/itrace.c
+@@ -84,11 +84,17 @@ static struct itrace_info *create_itrace_info(
+ static u32 usr_itrace_report_quiesce(struct utrace_attached_engine *engine,
+ 					struct task_struct *tsk)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32 usr_itrace_report_quiesce(u32 action,
++				struct utrace_attached_engine *engine,
++				unsigned long event)
++#else
+ static u32 usr_itrace_report_quiesce(enum utrace_resume_action action,
+ 				struct utrace_attached_engine *engine,
+ 				struct task_struct *tsk,
+ 				unsigned long event)
+ #endif
++#endif
+ {
+ 	int status;
+ 	struct itrace_info *ui;
+@@ -113,6 +119,14 @@ static u32 usr_itrace_report_signal(
+ 			     const struct k_sigaction *orig_ka,
+ 			     struct k_sigaction *return_ka)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32 usr_itrace_report_signal(u32 action,
++			     struct utrace_attached_engine *engine,
++			     struct pt_regs *regs,
++			     siginfo_t *info,
++			     const struct k_sigaction *orig_ka,
++			     struct k_sigaction *return_ka)
++#else
+ static u32 usr_itrace_report_signal(u32 action,
+ 			     struct utrace_attached_engine *engine,
+ 			     struct task_struct *tsk,
+@@ -121,7 +135,11 @@ static u32 usr_itrace_report_signal(u32 action,
+ 			     const struct k_sigaction *orig_ka,
+ 			     struct k_sigaction *return_ka)
+ #endif
++#endif
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *tsk = current;
++#endif
+ 	struct itrace_info *ui;
+ 	u32 return_flags;
+ 	unsigned long data = 0;
+@@ -177,11 +195,18 @@ static u32 usr_itrace_report_clone(
+                 unsigned long clone_flags,
+ 		struct task_struct *child)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32 usr_itrace_report_clone(u32 action,
++		struct utrace_attached_engine *engine,
++		unsigned long clone_flags,
++		struct task_struct *child)
++#else
+ static u32 usr_itrace_report_clone(enum utrace_resume_action action,
+ 		struct utrace_attached_engine *engine,
+ 		struct task_struct *parent, unsigned long clone_flags,
+ 		struct task_struct *child)
+ #endif
++#endif
+ {
+ 	return UTRACE_RESUME;
+ }
+@@ -190,9 +215,14 @@ static u32 usr_itrace_report_clone(enum utrace_resume_action action,
+ static u32 usr_itrace_report_death(struct utrace_attached_engine *e,
+                                    struct task_struct *tsk)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32 usr_itrace_report_death(struct utrace_attached_engine *e,
++	bool group_dead, int signal)
++#else
+ static u32 usr_itrace_report_death(struct utrace_attached_engine *e,
+ 	struct task_struct *tsk, bool group_dead, int signal)
+ #endif
++#endif
+ {
+ 	struct itrace_info *ui = rcu_dereference(e->data);
+ 	WARN_ON(!ui);
+diff --git a/runtime/task_finder.c b/runtime/task_finder.c
+index e89ac8e..b77fff8 100644
+--- a/runtime/task_finder.c
++++ b/runtime/task_finder.c
+@@ -107,23 +107,35 @@ static u32
+ __stp_utrace_task_finder_target_death(struct utrace_attached_engine *engine,
+ 				      struct task_struct *tsk);
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_target_death(struct utrace_attached_engine *engine,
++				      bool group_dead, int signal);
++#else
+ static u32
+ __stp_utrace_task_finder_target_death(struct utrace_attached_engine *engine,
+ 				      struct task_struct *tsk,
+ 				      bool group_dead, int signal);
+ #endif
++#endif
+ 
+ #ifdef UTRACE_ORIG_VERSION
+ static u32
+ __stp_utrace_task_finder_target_quiesce(struct utrace_attached_engine *engine,
+ 					struct task_struct *tsk);
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
+ static u32
++__stp_utrace_task_finder_target_quiesce(u32 action,
++					struct utrace_attached_engine *engine,
++					unsigned long event);
++#else
+ __stp_utrace_task_finder_target_quiesce(enum utrace_resume_action action,
+ 					struct utrace_attached_engine *engine,
+ 					struct task_struct *tsk,
+ 					unsigned long event);
+ #endif
++#endif
+ 
+ #ifdef UTRACE_ORIG_VERSION
+ static u32
+@@ -131,12 +143,19 @@ __stp_utrace_task_finder_target_syscall_entry(struct utrace_attached_engine *eng
+ 					      struct task_struct *tsk,
+ 					      struct pt_regs *regs);
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_target_syscall_entry(u32 action,
++					      struct utrace_attached_engine *engine,
++					      struct pt_regs *regs);
++#else
+ static u32
+ __stp_utrace_task_finder_target_syscall_entry(enum utrace_resume_action action,
+ 					      struct utrace_attached_engine *engine,
+ 					      struct task_struct *tsk,
+ 					      struct pt_regs *regs);
+ #endif
++#endif
+ 
+ #ifdef UTRACE_ORIG_VERSION
+ static u32
+@@ -144,12 +163,19 @@ __stp_utrace_task_finder_target_syscall_exit(struct utrace_attached_engine *engi
+ 					     struct task_struct *tsk,
+ 					     struct pt_regs *regs);
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_target_syscall_exit(u32 action,
++					     struct utrace_attached_engine *engine,
++					     struct pt_regs *regs);
++#else
+ static u32
+ __stp_utrace_task_finder_target_syscall_exit(enum utrace_resume_action action,
+ 					     struct utrace_attached_engine *engine,
+ 					     struct task_struct *tsk,
+ 					     struct pt_regs *regs);
+ #endif
++#endif
+ 
+ static int
+ stap_register_task_finder_target(struct stap_task_finder_target *new_tgt)
+@@ -857,6 +883,13 @@ __stp_utrace_task_finder_report_clone(struct utrace_attached_engine *engine,
+ 				      unsigned long clone_flags,
+ 				      struct task_struct *child)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_report_clone(u32 action,
++				      struct utrace_attached_engine *engine,
++				      unsigned long clone_flags,
++				      struct task_struct *child)
++#else
+ static u32
+ __stp_utrace_task_finder_report_clone(enum utrace_resume_action action,
+ 				      struct utrace_attached_engine *engine,
+@@ -864,7 +897,11 @@ __stp_utrace_task_finder_report_clone(enum utrace_resume_action action,
+ 				      unsigned long clone_flags,
+ 				      struct task_struct *child)
+ #endif
++#endif
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *parent = current;
++#endif
+ 	int rc;
+ 	struct mm_struct *mm;
+ 	char *mmpath_buf;
+@@ -898,6 +935,14 @@ __stp_utrace_task_finder_report_exec(struct utrace_attached_engine *engine,
+ 				     const struct linux_binprm *bprm,
+ 				     struct pt_regs *regs)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_report_exec(u32 action,
++				     struct utrace_attached_engine *engine,
++				     const struct linux_binfmt *fmt,
++				     const struct linux_binprm *bprm,
++				     struct pt_regs *regs)
++#else
+ static u32
+ __stp_utrace_task_finder_report_exec(enum utrace_resume_action action,
+ 				     struct utrace_attached_engine *engine,
+@@ -906,7 +951,11 @@ __stp_utrace_task_finder_report_exec(enum utrace_resume_action action,
+ 				     const struct linux_binprm *bprm,
+ 				     struct pt_regs *regs)
+ #endif
++#endif
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *tsk = current;
++#endif
+ 	size_t filelen;
+ 	struct list_head *tgt_node;
+ 	struct stap_task_finder_target *tgt;
+@@ -949,11 +998,17 @@ static u32
+ stap_utrace_task_finder_report_death(struct utrace_attached_engine *engine,
+ 				     struct task_struct *tsk)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++stap_utrace_task_finder_report_death(struct utrace_attached_engine *engine,
++				     bool group_dead, int signal)
++#else
+ static u32
+ stap_utrace_task_finder_report_death(struct utrace_attached_engine *engine,
+ 				     struct task_struct *tsk,
+ 				     bool group_dead, int signal)
+ #endif
++#endif
+ {
+ 	debug_task_finder_detach();
+ 	return UTRACE_DETACH;
+@@ -964,12 +1019,21 @@ static u32
+ __stp_utrace_task_finder_target_death(struct utrace_attached_engine *engine,
+ 				      struct task_struct *tsk)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_target_death(struct utrace_attached_engine *engine,
++				      bool group_dead, int signal)
++#else
+ static u32
+ __stp_utrace_task_finder_target_death(struct utrace_attached_engine *engine,
+ 				      struct task_struct *tsk,
+ 				      bool group_dead, int signal)
+ #endif
++#endif
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *tsk = current;
++#endif
+ 	struct stap_task_finder_target *tgt = engine->data;
+ 
+ 	if (atomic_read(&__stp_task_finder_state) != __STP_TF_RUNNING) {
+@@ -1132,13 +1196,23 @@ static u32
+ __stp_utrace_task_finder_target_quiesce(struct utrace_attached_engine *engine,
+ 					struct task_struct *tsk)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_target_quiesce(u32 action,
++					struct utrace_attached_engine *engine,
++					unsigned long event)
++#else
+ static u32
+ __stp_utrace_task_finder_target_quiesce(enum utrace_resume_action action,
+ 					struct utrace_attached_engine *engine,
+ 					struct task_struct *tsk,
+ 					unsigned long event)
+ #endif
++#endif
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *tsk = current;
++#endif
+ 	struct stap_task_finder_target *tgt = engine->data;
+ 	int rc;
+ 
+@@ -1201,13 +1275,23 @@ __stp_utrace_task_finder_target_syscall_entry(struct utrace_attached_engine *eng
+ 					      struct task_struct *tsk,
+ 					      struct pt_regs *regs)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_target_syscall_entry(u32 action,
++					      struct utrace_attached_engine *engine,
++					      struct pt_regs *regs)
++#else
+ static u32
+ __stp_utrace_task_finder_target_syscall_entry(enum utrace_resume_action action,
+ 					      struct utrace_attached_engine *engine,
+ 					      struct task_struct *tsk,
+ 					      struct pt_regs *regs)
+ #endif
++#endif
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *tsk = current;
++#endif
+ 	struct stap_task_finder_target *tgt = engine->data;
+ 	long syscall_no;
+ 	unsigned long args[3] = { 0L };
+@@ -1271,13 +1355,23 @@ __stp_utrace_task_finder_target_syscall_exit(struct utrace_attached_engine *engi
+ 					     struct task_struct *tsk,
+ 					     struct pt_regs *regs)
+ #else
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++static u32
++__stp_utrace_task_finder_target_syscall_exit(u32 action,
++					     struct utrace_attached_engine *engine,
++					     struct pt_regs *regs)
++#else
+ static u32
+ __stp_utrace_task_finder_target_syscall_exit(enum utrace_resume_action action,
+ 					     struct utrace_attached_engine *engine,
+ 					     struct task_struct *tsk,
+ 					     struct pt_regs *regs)
+ #endif
++#endif
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *tsk = current;
++#endif
+ 	struct stap_task_finder_target *tgt = engine->data;
+ 	unsigned long rv;
+ 	struct __stp_tf_map_entry *entry;
+diff --git a/runtime/uprobes2/uprobes.c b/runtime/uprobes2/uprobes.c
+index 4c3a9c9..02941e2 100644
+--- a/runtime/uprobes2/uprobes.c
++++ b/runtime/uprobes2/uprobes.c
+@@ -1881,7 +1881,9 @@ static void uprobe_inject_delayed_signals(struct list_head *delayed_signals)
+  */
+ static u32 uprobe_report_signal(u32 action,
+ 				struct utrace_attached_engine *engine,
++#if !(defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216))
+ 				struct task_struct *tsk,
++#endif
+ 				struct pt_regs *regs,
+ 				siginfo_t *info,
+ 				const struct k_sigaction *orig_ka,
+@@ -2129,9 +2131,15 @@ static int utask_quiesce_pending_sigtrap(struct uprobe_task *utask)
+  * insertions or removals pending.  If we're the last thread in this
+  * process to quiesce, do the insertion(s) and/or removal(s).
+  */
+-static u32 uprobe_report_quiesce(enum utrace_resume_action action,
++static u32 uprobe_report_quiesce(
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++				u32 action,
++				struct utrace_attached_engine *engine,
++#else
++				enum utrace_resume_action action,
+ 				struct utrace_attached_engine *engine,
+ 				struct task_struct *tsk,
++#endif
+ 				unsigned long event)
+ {
+ 	struct uprobe_task *utask;
+@@ -2140,7 +2148,9 @@ static u32 uprobe_report_quiesce(enum utrace_resume_action action,
+ 
+ 	utask = (struct uprobe_task *)rcu_dereference(engine->data);
+ 	BUG_ON(!utask);
++#if !(defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216))
+ 	BUG_ON(tsk != current);	// guaranteed by utrace 2008
++#endif
+ 
+ 	if (utask->state == UPTASK_SSTEP)
+ 		/*
+@@ -2243,8 +2253,14 @@ static void uprobe_cleanup_process(struct uprobe_process *uproc)
+  */
+ static u32 uprobe_report_exit(enum utrace_resume_action action,
+ 			struct utrace_attached_engine *engine,
+-			struct task_struct *tsk, long orig_code, long *code)
++#if !(defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216))
++			struct task_struct *tsk,
++#endif
++			long orig_code, long *code)
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *tsk = current;
++#endif
+ 	struct uprobe_task *utask;
+ 	struct uprobe_process *uproc;
+ 	struct uprobe_probept *ppt;
+@@ -2449,10 +2465,15 @@ static int uprobe_fork_uproc(struct uprobe_process *parent_uproc,
+  */
+ static u32 uprobe_report_clone(enum utrace_resume_action action,
+ 				struct utrace_attached_engine *engine,
++#if !(defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216))
+ 				struct task_struct *parent,
++#endif
+ 				unsigned long clone_flags,
+ 				struct task_struct *child)
+ {
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++	struct task_struct *parent = current;
++#endif
+ 	int len;
+ 	struct uprobe_process *uproc;
+ 	struct uprobe_task *ptask, *ctask;
+@@ -2554,9 +2575,15 @@ done:
+  *		- We have to free up uprobe resources associated with
+  *		  this process.
+  */
+-static u32 uprobe_report_exec(enum utrace_resume_action action,
++static u32 uprobe_report_exec(
++#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)
++				u32 action,
+ 				struct utrace_attached_engine *engine,
+-				struct task_struct *tsk,
++#else
++				enum utrace_resume_action action,
++				struct utrace_attached_engine *engine,
++				struct task_struct *parent,
++#endif
+ 				const struct linux_binfmt *fmt,
+ 				const struct linux_binprm *bprm,
+ 				struct pt_regs *regs)
+diff --git a/tapset-utrace.cxx b/tapset-utrace.cxx
+index bd668a2..cc4f280 100644
+--- a/tapset-utrace.cxx
++++ b/tapset-utrace.cxx
+@@ -842,8 +842,12 @@ utrace_derived_probe_group::emit_module_decls (systemtap_session& s)
+       s.op->newline() << "#ifdef UTRACE_ORIG_VERSION";
+       s.op->newline() << "static u32 stap_utrace_probe_syscall(struct utrace_attached_engine *engine, struct task_struct *tsk, struct pt_regs *regs) {";
+       s.op->newline() << "#else";
++      s.op->newline() << "#if defined(UTRACE_API_VERSION) && (UTRACE_API_VERSION >= 20091216)";
++      s.op->newline() << "static u32 stap_utrace_probe_syscall(u32 action, struct utrace_attached_engine *engine, struct pt_regs *regs) {";
++      s.op->newline() << "#else";
+       s.op->newline() << "static u32 stap_utrace_probe_syscall(enum utrace_resume_action action, struct utrace_attached_engine *engine, struct task_struct *tsk, struct pt_regs *regs) {";
+       s.op->newline() << "#endif";
++      s.op->newline() << "#endif";
+ 
+       s.op->indent(1);
+       s.op->newline() << "struct stap_utrace_probe *p = (struct stap_utrace_probe *)engine->data;";
+-- 
+1.6.2.5
+
+From 21b6dfed5aefcc09d1445df203627844586e6fda Mon Sep 17 00:00:00 2001
+From: David Smith <dsmith@redhat.com>
+Date: Mon, 21 Dec 2009 21:29:48 -0600
+Subject: [PATCH] Fixed compilation on f11.
+
+* runtime/task_finder.c: Fixed last checkin.
+---
+ runtime/task_finder.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/runtime/task_finder.c b/runtime/task_finder.c
+index b77fff8..deccfa7 100644
+--- a/runtime/task_finder.c
++++ b/runtime/task_finder.c
+@@ -130,6 +130,7 @@ __stp_utrace_task_finder_target_quiesce(u32 action,
+ 					struct utrace_attached_engine *engine,
+ 					unsigned long event);
+ #else
++static u32
+ __stp_utrace_task_finder_target_quiesce(enum utrace_resume_action action,
+ 					struct utrace_attached_engine *engine,
+ 					struct task_struct *tsk,
+-- 
+1.6.2.5
+
+

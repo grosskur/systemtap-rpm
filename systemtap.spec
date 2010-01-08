@@ -9,7 +9,7 @@
 
 Name: systemtap
 Version: 1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -65,6 +65,9 @@ BuildRequires: gtkmm24-devel >= 2.8
 Patch10: SystemTap-1.0-limit-printf-arguments.patch
 Patch11: SystemTap-1.0-limit-dwarf-expression-stack-size.patch
 Patch12: SystemTap-1.0-unwind-table-size-checks.patch
+
+# Handle UTRACE_API_VERSION 20091216.
+Patch20: SystemTap-1.0-new-utrace-api.patch
 
 %description
 SystemTap is an instrumentation system for systems running Linux 2.6.
@@ -173,6 +176,9 @@ cd ..
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+
+# Handle UTRACE_API_VERSION 20091216.
+%patch20 -p1
 
 %build
 
@@ -397,6 +403,9 @@ exit 0
 
 
 %changelog
+* Fri Jan  8 2010 Roland McGrath <roland@redhat.com> - 1.0-4
+- Handle UTRACE_API_VERSION 20091216 (Fedora 2.6.32 kernels).
+
 * Fri Dec 11 2009 Josh Stone <jistone@redhat.com> - 1.0-3
 - Rebuild against rpm-4.8.0
 
