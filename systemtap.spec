@@ -58,6 +58,7 @@ Requires: crash
 
 Patch10: systemtap-1.1-cfi-cfa_ops-fixes.patch
 Patch11: systemtap-1.1-get_argv.patch
+Patch12: systemtap-1.1-tighten-server-params.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -194,6 +195,7 @@ cd ..
 
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
 
 %build
 
@@ -503,6 +505,8 @@ exit 0
   - Resolves RHBZ #564429
 - Add systemtap-1.1-get_argv.patch
   - Resolves CVE-2010-0411
+- Add systemtap-1.1-tighten-server-params.patch (excluding testsuite)
+  - Resolves CVE-2010-0412, CVE-2009-4273
 
 * Mon Dec 21 2009 David Smith <dsmith@redhat.com> - 1.1-1
 - Upstream release.
