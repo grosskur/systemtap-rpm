@@ -57,6 +57,7 @@ Requires: crash
 %endif
 
 Patch10: systemtap-1.1-cfi-cfa_ops-fixes.patch
+Patch11: systemtap-1.1-get_argv.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -192,6 +193,7 @@ cd ..
 %endif
 
 %patch10 -p1
+%patch11 -p1
 
 %build
 
@@ -498,7 +500,9 @@ exit 0
 %changelog
 * Mon Feb 15 2010 Mark Wielaard <mjw@redhat.com> - 1.1-2
 - Add systemtap-1.1-cfi-cfa_ops-fixes.patch
-- Resolves RHBZ #564429
+  - Resolves RHBZ #564429
+- Add systemtap-1.1-get_argv.patch
+  - Resolves CVE-2010-0411
 
 * Mon Dec 21 2009 David Smith <dsmith@redhat.com> - 1.1-1
 - Upstream release.
