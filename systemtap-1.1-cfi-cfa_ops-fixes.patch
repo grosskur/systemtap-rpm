@@ -1,0 +1,283 @@
+commit 08d1d520616557f6ff7dd023e260ad6577e9e0e8
+Author: Mark Wielaard <mjw@redhat.com>
+Date:   Mon Jan 18 09:13:30 2010 +0100
+
+    PR11173 Markers get a bad address in prelinked libraries.
+    
+    Our literal_addr_to_sym_addr() function was just wrong. To compensate for
+    raw addresses read from elf (either given by the user or through a mark
+    transformation) we need to know what the elf_bias is (as returned by
+    dwfl_module_getelf) before feeding them to any libdwfl functions.
+    
+    * tapsets.cxx (query_module_dwarf): Always add elf_bias to raw function or
+      statement addresses before calling query_addr().
+      (query_addr): Don't call literal_addr_to_sym_addr().
+    * dwflpp.h (literal_addr_to_sym_addr): Removed.
+    * dwflpp.cxx (literal_addr_to_sym_addr): Likewise.
+
+diff --git a/dwflpp.cxx b/dwflpp.cxx
+index 7dd31d0..e6fe017 100644
+--- a/dwflpp.cxx
++++ b/dwflpp.cxx
+@@ -2771,45 +2771,6 @@ dwflpp::relocate_address(Dwarf_Addr dw_addr, string& reloc_section)
+   return reloc_addr;
+ }
+ 
+-/* Converts a "global" literal address to the module symbol address
+- * space.  If necessary (not for kernel and executables using absolute
+- * addresses), this adjust the address for the current module symbol
+- * bias.  Literal addresses are provided by the user (or contained on
+- * the .probes section) based on the "on disk" layout of the module.
+- */
+-Dwarf_Addr
+-dwflpp::literal_addr_to_sym_addr(Dwarf_Addr lit_addr)
+-{
+-  if (sess.verbose > 2)
+-    clog << "literal_addr_to_sym_addr 0x" << hex << lit_addr << dec << endl;
+-
+-  // Assume the address came from the symbol list.
+-  // If we cannot get the symbol bias fall back on the dw bias.
+-  // The kernel (and other absolute executable modules) is special though.
+-  if (module_name != TOK_KERNEL
+-      && dwfl_module_relocations (module) > 0)
+-    {
+-      Dwarf_Addr symbias = ~0;
+-      if (dwfl_module_getsymtab (module) != -1)
+-	dwfl_module_info (module, NULL, NULL, NULL, NULL,
+-			  &symbias, NULL, NULL);
+-
+-      if (sess.verbose > 3)
+-        clog << "symbias 0x" << hex << symbias << dec
+-	     << ", dwbias 0x" << hex << module_bias << dec << endl;
+-
+-      if (symbias == (Dwarf_Addr) ~0)
+-	symbias = module_bias;
+-
+-      lit_addr += symbias;
+-    }
+-
+-  if (sess.verbose > 2)
+-    clog << "literal_addr_to_sym_addr ret 0x" << hex << lit_addr << dec << endl;
+-
+-  return lit_addr;
+-}
+-
+ /* Returns the call frame address operations for the given program counter
+  * in the libdw address space.
+  */
+diff --git a/dwflpp.h b/dwflpp.h
+index cdc6ad9..523dd88 100644
+--- a/dwflpp.h
++++ b/dwflpp.h
+@@ -284,8 +284,6 @@ struct dwflpp
+ 
+   Dwarf_Addr relocate_address(Dwarf_Addr addr, std::string& reloc_section);
+ 
+-  Dwarf_Addr literal_addr_to_sym_addr(Dwarf_Addr lit_addr);
+-
+ 
+ private:
+   DwflPtr dwfl_ptr;
+diff --git a/tapsets.cxx b/tapsets.cxx
+index 071f92d..d5c6b25 100644
+--- a/tapsets.cxx
++++ b/tapsets.cxx
+@@ -761,6 +761,13 @@ dwarf_query::query_module_dwarf()
+       // number plus the module's bias.
+       Dwarf_Addr addr = has_function_num ?
+         function_num_val : statement_num_val;
++
++      // These are raw addresses, we need to know what the elf_bias
++      // is to feed it to libdwfl based functions.
++      Dwarf_Addr elf_bias;
++      Elf *elf = dwfl_module_getelf (dw.module, &elf_bias);
++      assert(elf);
++      addr += elf_bias;
+       query_addr(addr, this);
+     }
+   else
+@@ -1168,8 +1175,8 @@ query_addr(Dwarf_Addr addr, dwarf_query *q)
+ {
+   dwflpp &dw = q->dw;
+ 
+-  // Translate to and actual sumbol address.
+-  addr = dw.literal_addr_to_sym_addr(addr);
++  if (q->sess.verbose > 2)
++    clog << "query_addr 0x" << hex << addr << dec << endl;
+ 
+   // First pick which CU contains this address
+   Dwarf_Die* cudie = dw.query_cu_containing_address(addr);
+
+commit 87748e2b87e574d3c83866ccd0d83678c3c68d93
+Author: Mark Wielaard <mjw@redhat.com>
+Date:   Tue Feb 2 13:47:19 2010 +0100
+
+    Make sure cfa_ops are always retrieved through dwfl global address.
+    
+    dwflpp::translate_location() works on the dw address space, but
+    get_cfa_ops() starts out with dwfl calls (only dwarf_cfi_addrframe()
+    needs to be adjusted for bias).
+    
+    * dwflpp.cxx (translate_location): Pass pc plus module bias through to
+      get_cfa_ops.
+      (get_cfa_ops): Adjust for bias when calling dwarf_cfi_addrframe(),
+      add frame start/end address when found if verbose logging.
+    * testsuite/systemtap.exelib/lib.stp: Add $foo and $bar variables to
+      process.function probes.
+    * testsuite/systemtap.exelib/libmarkunamestack.stp: Likewise.
+    * testsuite/systemtap.exelib/lib.tcl: Expect correct values for
+      process.function probe variables.
+    * testsuite/systemtap.exelib/libmarkunamestack.tcl: Likewise.
+
+diff --git a/dwflpp.cxx b/dwflpp.cxx
+index e6fe017..d16411c 100644
+--- a/dwflpp.cxx
++++ b/dwflpp.cxx
+@@ -1726,9 +1726,10 @@ dwflpp::translate_location(struct obstack *pool,
+                             e->tok);
+     }
+ 
+-  // pc is relative to current module, which is what get_cfa_ops
+-  // and c_translate_location expects.
+-  Dwarf_Op *cfa_ops = get_cfa_ops (pc);
++  // pc is in the dw address space of the current module, which is what
++  // c_translate_location expects. get_cfa_ops wants the global dwfl address.
++  Dwarf_Addr addr = pc + module_bias;
++  Dwarf_Op *cfa_ops = get_cfa_ops (addr);
+   return c_translate_location (pool, &loc2c_error, this,
+                                &loc2c_emit_address,
+                                1, 0 /* PR9768 */,
+@@ -2783,17 +2784,17 @@ dwflpp::get_cfa_ops (Dwarf_Addr pc)
+     clog << "get_cfa_ops @0x" << hex << pc << dec
+ 	 << ", module_start @0x" << hex << module_start << dec << endl;
+ 
+-#if _ELFUTILS_PREREQ(0,142)
+   // Try debug_frame first, then fall back on eh_frame.
+-  size_t cfa_nops;
+-  Dwarf_Addr bias;
++  size_t cfa_nops = 0;
++  Dwarf_Addr bias = 0;
++  Dwarf_Frame *frame = NULL;
++#if _ELFUTILS_PREREQ(0,142)
+   Dwarf_CFI *cfi = dwfl_module_dwarf_cfi (module, &bias);
+   if (cfi != NULL)
+     {
+       if (sess.verbose > 3)
+ 	clog << "got dwarf cfi bias: 0x" << hex << bias << dec << endl;
+-      Dwarf_Frame *frame = NULL;
+-      if (dwarf_cfi_addrframe (cfi, pc, &frame) == 0)
++      if (dwarf_cfi_addrframe (cfi, pc - bias, &frame) == 0)
+ 	dwarf_frame_cfa (frame, &cfa_ops, &cfa_nops);
+       else if (sess.verbose > 3)
+ 	clog << "dwarf_cfi_addrframe failed: " << dwarf_errmsg(-1) << endl;
+@@ -2809,7 +2810,7 @@ dwflpp::get_cfa_ops (Dwarf_Addr pc)
+ 	  if (sess.verbose > 3)
+ 	    clog << "got eh cfi bias: 0x" << hex << bias << dec << endl;
+ 	  Dwarf_Frame *frame = NULL;
+-	  if (dwarf_cfi_addrframe (cfi, pc, &frame) == 0)
++	  if (dwarf_cfi_addrframe (cfi, pc - bias, &frame) == 0)
+ 	    dwarf_frame_cfa (frame, &cfa_ops, &cfa_nops);
+ 	  else if (sess.verbose > 3)
+ 	    clog << "dwarf_cfi_addrframe failed: " << dwarf_errmsg(-1) << endl;
+@@ -2821,7 +2822,20 @@ dwflpp::get_cfa_ops (Dwarf_Addr pc)
+ #endif
+ 
+   if (sess.verbose > 2)
+-    clog << (cfa_ops == NULL ? "not " : " ") << "found cfa" << endl;
++    {
++      if (cfa_ops == NULL)
++	clog << "not found cfa" << endl;
++      else
++	{
++	  Dwarf_Addr frame_start, frame_end;
++	  bool frame_signalp;
++	  int info = dwarf_frame_info (frame, &frame_start, &frame_end,
++				       &frame_signalp);
++	  clog << "found cfa, info:" << info << " [start: 0x" << hex
++	       << frame_start << dec << ", end: 0x" << hex << frame_end
++	       << dec << "), nops: " << cfa_nops << endl;
++	}
++    }
+ 
+   return cfa_ops;
+ }
+diff --git a/testsuite/systemtap.exelib/lib.stp b/testsuite/systemtap.exelib/lib.stp
+index 0151282..3fdc6db 100644
+--- a/testsuite/systemtap.exelib/lib.stp
++++ b/testsuite/systemtap.exelib/lib.stp
+@@ -6,7 +6,7 @@ probe process(@1).function("main") {
+ }
+ 
+ probe process(@1).function("main_func") {
+-  printf("main_func\n");
++  printf("main_func %d\n", $foo);
+ }
+ 
+ probe process(@2).function("lib_main") {
+@@ -14,5 +14,5 @@ probe process(@2).function("lib_main") {
+ }
+ 
+ probe process(@2).function("lib_func") {
+-  printf("lib_func\n");
++  printf("lib_func %d\n", $bar);
+ }
+diff --git a/testsuite/systemtap.exelib/lib.tcl b/testsuite/systemtap.exelib/lib.tcl
+index c5b7402..a33290b 100644
+--- a/testsuite/systemtap.exelib/lib.tcl
++++ b/testsuite/systemtap.exelib/lib.tcl
+@@ -1,11 +1,11 @@
+ set ::result_string {main
+-main_func
+-main_func
+-main_func
++main_func 3
++main_func 2
++main_func 1
+ lib_main
+-lib_func
+-lib_func
+-lib_func}
++lib_func 3
++lib_func 2
++lib_func 1}
+ 
+ # Only run on make installcheck
+ if {! [installtest_p]} { untested "lib-$testname"; return }
+diff --git a/testsuite/systemtap.exelib/libmarkunamestack.stp b/testsuite/systemtap.exelib/libmarkunamestack.stp
+index 0efbae0..5ee229d 100644
+--- a/testsuite/systemtap.exelib/libmarkunamestack.stp
++++ b/testsuite/systemtap.exelib/libmarkunamestack.stp
+@@ -7,7 +7,7 @@ probe process(@1).function("main") {
+ }
+ 
+ probe process(@1).function("main_func") {
+-  printf("main_func\n");
++  printf("main_func: %d\n", $foo);
+ }
+ 
+ probe process(@2).function("lib_main") {
+@@ -15,7 +15,7 @@ probe process(@2).function("lib_main") {
+ }
+ 
+ probe process(@2).function("lib_func") {
+-  printf("lib_func\n");
++  printf("lib_func: %d\n", $bar);
+ }
+ 
+ #mark
+diff --git a/testsuite/systemtap.exelib/libmarkunamestack.tcl b/testsuite/systemtap.exelib/libmarkunamestack.tcl
+index 55dc10e..20111b3 100644
+--- a/testsuite/systemtap.exelib/libmarkunamestack.tcl
++++ b/testsuite/systemtap.exelib/libmarkunamestack.tcl
+@@ -47,9 +47,9 @@ expect {
+ 
+ # lib
+     -re {^main\r\n} {incr lib; exp_continue}
+-    -re {^main_func\r\n} {incr lib; exp_continue}
++    -re {^main_func: [1-3]\r\n} {incr lib; exp_continue}
+     -re {^lib_main\r\n} {incr lib; exp_continue}
+-    -re {^lib_func\r\n} {incr lib; exp_continue}
++    -re {^lib_func: [1-3]\r\n} {incr lib; exp_continue}
+ 
+ # mark
+     -re {^main_count: [1-3]\r\n} {incr mark; exp_continue}
