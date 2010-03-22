@@ -11,8 +11,8 @@
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
-Version: 1.1
-Release: 2%{?dist}
+Version: 1.2
+Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -55,10 +55,6 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 %if %{with_crash}
 Requires: crash
 %endif
-
-Patch10: systemtap-1.1-cfi-cfa_ops-fixes.patch
-Patch11: systemtap-1.1-get_argv.patch
-Patch12: systemtap-1.1-tighten-server-params.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -193,10 +189,6 @@ find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
 
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-
 %build
 
 %if %{with_bundled_elfutils}
@@ -283,6 +275,9 @@ find examples testsuite -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1
 # permissions back to 04111 in the %files section below.
 chmod 755 $RPM_BUILD_ROOT%{_bindir}/staprun
 
+#install the useful stap-prep script
+install -c -m 755 stap-prep $RPM_BUILD_ROOT%{_bindir}/stap-prep
+
 # Copy over the testsuite
 cp -rp testsuite $RPM_BUILD_ROOT%{_datadir}/systemtap
 
@@ -313,11 +308,16 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 initscript/config.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/stap-server
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log
-touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server.log
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server
+touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server/log
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
+install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
+
+%pre
+getent group stap-server >/dev/null || groupadd -g 155 -r stap-server || groupadd -r stap-server
 
 %pre runtime
 getent group stapdev >/dev/null || groupadd -r stapdev
@@ -325,25 +325,27 @@ getent group stapusr >/dev/null || groupadd -r stapusr
 exit 0
 
 %pre server
-getent group stap-server >/dev/null || groupadd -r stap-server
-getent passwd stap-server >/dev/null || useradd -c "Systemtap Compile Server" -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server
-chmod 755 %{_localstatedir}/lib/stap-server
+getent passwd stap-server >/dev/null || \
+  useradd -c "Systemtap Compile Server" -u 155 -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server || \
+  useradd -c "Systemtap Compile Server" -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server
+test -e ~stap-server && chmod 755 ~stap-server
 exit 0
 
 %post server
-chmod 664 %{_localstatedir}/log/stap-server.log
-chown stap-server %{_localstatedir}/log/stap-server.log
-chgrp stap-server %{_localstatedir}/log/stap-server.log
-# Make sure that the uprobes module can be built by the server
-test -e /usr/share/systemtap/runtime/uprobes || mkdir -p /usr/share/systemtap/runtime/uprobes
-chgrp stap-server /usr/share/systemtap/runtime/uprobes
-chmod 775 /usr/share/systemtap/runtime/uprobes
-# As stap-server, generate the certificate used for signing and for ssl.
-runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
-# Authorize the certificate as a trusted ssl peer and as a trusted signer
-# local host.
-%{_bindir}/stap-authorize-server-cert %{_localstatedir}/lib/stap-server/.systemtap/ssl/server/stap.cert
-%{_bindir}/stap-authorize-signing-cert %{_localstatedir}/lib/stap-server/.systemtap/ssl/server/stap.cert
+test -e %{_localstatedir}/log/stap-server/log || {
+     touch %{_localstatedir}/log/stap-server/log
+     chmod 664 %{_localstatedir}/log/stap-server/log
+     chown stap-server:stap-server %{_localstatedir}/log/stap-server/log
+}
+# If it does not already exit, as stap-server, generate the certificate
+# used for signing and for ssl.
+if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
+   runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
+   # Authorize the certificate as a trusted ssl peer and as a trusted signer
+   # on the local host.
+   %{_bindir}/stap-authorize-server-cert ~stap-server/.systemtap/ssl/server/stap.cert
+   %{_bindir}/stap-authorize-signing-cert ~stap-server/.systemtap/ssl/server/stap.cert
+fi
 
 # Activate the service
 /sbin/chkconfig --add stap-server
@@ -389,12 +391,12 @@ exit 0
 
 %post
 # Remove any previously-built uprobes.ko materials
-(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 2>&1 || true
+(make -C %{_datadir}/%{name}/runtime/uprobes clean) >/dev/null 2>&1 || true
 (/sbin/rmmod uprobes) >/dev/null 2>&1 || true
 
 %preun
 # Ditto
-(make -C /usr/share/systemtap/runtime/uprobes clean) >/dev/null 2>&1 || true
+(make -C %{_datadir}/%{name}/runtime/uprobes clean) >/dev/null 2>&1 || true
 (/sbin/rmmod uprobes) >/dev/null 2>&1 || true
 
 %files
@@ -410,6 +412,7 @@ exit 0
 %endif
 
 %{_bindir}/stap
+%{_bindir}/stap-prep
 %{_bindir}/stap-report
 %{_mandir}/man1/*
 %{_mandir}/man3/*
@@ -427,6 +430,9 @@ exit 0
 %if %{with_crash}
 %{_libdir}/%{name}/staplog.so*
 %endif
+
+# Make sure that the uprobes module can be built by root and by the server
+%dir %attr(0775,root,stap-server) %{_datadir}/%{name}/runtime/uprobes
 
 %files runtime
 %defattr(-,root,root)
@@ -469,10 +475,12 @@ exit 0
 %{_mandir}/man8/stap-server.8*
 %{_mandir}/man8/stap-authorize-server-cert.8*
 %{_sysconfdir}/rc.d/init.d/stap-server
+%config(noreplace) %{_sysconfdir}/logrotate.d/stap-server
 %dir %{_sysconfdir}/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
-%{_localstatedir}/log/stap-server.log
+%dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
+%ghost %config %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
 %doc initscript/README.stap-server
 
 %files sdt-devel
@@ -500,13 +508,8 @@ exit 0
 
 
 %changelog
-* Mon Feb 15 2010 Mark Wielaard <mjw@redhat.com> - 1.1-2
-- Add systemtap-1.1-cfi-cfa_ops-fixes.patch
-  - Resolves RHBZ #564429
-- Add systemtap-1.1-get_argv.patch
-  - Resolves CVE-2010-0411
-- Add systemtap-1.1-tighten-server-params.patch (excluding testsuite)
-  - Resolves CVE-2010-0412, CVE-2009-4273
+* Mon Mar 22 2010 Frank Ch. Eigler <fche@redhat.com> - 1.2-1
+- Upstream release.
 
 * Mon Dec 21 2009 David Smith <dsmith@redhat.com> - 1.1-1
 - Upstream release.
