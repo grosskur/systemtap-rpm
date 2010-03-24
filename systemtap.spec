@@ -12,7 +12,7 @@
 
 Name: systemtap
 Version: 1.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -77,6 +77,9 @@ BuildRequires: libglademm24-devel >= 2.6.7
 BuildRequires: boost-devel
 %endif
 %endif
+
+# http://sources.redhat.com/bugzilla/show_bug.cgi?id=11427
+Patch2: systemtap-1.2-fix-sparc.patch
 
 %description
 SystemTap is an instrumentation system for systems running Linux 2.6.
@@ -188,6 +191,8 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+
+%patch2 -p1 -b .sparc
 
 %build
 
@@ -508,6 +513,9 @@ exit 0
 
 
 %changelog
+* Wed Mar 24 2010 Tom "spot" Callaway <tcallawa@redhat.com> - 1.2-2
+- fix compilation on sparc
+
 * Mon Mar 22 2010 Frank Ch. Eigler <fche@redhat.com> - 1.2-1
 - Upstream release.
 
