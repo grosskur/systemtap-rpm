@@ -1,0 +1,12 @@
+diff -up systemtap-1.2/includes/sys/sdt.h.BAD systemtap-1.2/includes/sys/sdt.h
+--- systemtap-1.2/includes/sys/sdt.h.BAD	2010-03-24 11:30:50.694520827 -0400
++++ systemtap-1.2/includes/sys/sdt.h	2010-03-24 11:44:29.062420646 -0400
+@@ -72,7 +72,7 @@
+ #define STAP_UNINLINE
+ #endif
+ 
+-#if defined __x86_64__ || defined __i386__  || defined __powerpc__ || defined __arm__
++#if defined __x86_64__ || defined __i386__  || defined __powerpc__ || defined __arm__ || defined __sparc__
+ #define STAP_NOP "\tnop "
+ #else
+ #define STAP_NOP "\tnop 0 "
