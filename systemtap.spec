@@ -1,6 +1,10 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
+%ifarch ppc # crash is not available
+%{!?with_crash: %global with_crash 0}
+%else
 %{!?with_crash: %global with_crash 1}
+%endif
 %{!?with_rpm: %global with_rpm 1}
 %{!?with_bundled_elfutils: %global with_bundled_elfutils 0}
 %{!?elfutils_version: %global elfutils_version 0.127}
@@ -12,7 +16,7 @@
 
 Name: systemtap
 Version: 1.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -507,6 +511,9 @@ exit 0
 
 
 %changelog
+* Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-2
+- Disable crash on ppc.
+
 * Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-1
 - Upstream release.
 
