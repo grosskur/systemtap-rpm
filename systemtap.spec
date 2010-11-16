@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -24,6 +24,8 @@ License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
+#Patch1 is elfutils-portability.patch below
+Patch2: rhbz653606,653604.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
@@ -189,6 +191,7 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+%patch2 -p1
 
 %build
 
@@ -270,10 +273,10 @@ mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/examples examples
 # Fix paths in the example & testsuite scripts
 find examples testsuite -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
 
-# Because "make install" may install staprun with mode 04111, the
+# Because "make install" may install staprun with whatever mode, the
 # post-processing programs rpmbuild runs won't be able to read it.
 # So, we change permissions so that they can read it.  We'll set the
-# permissions back to 04111 in the %files section below.
+# permissions back to 04110 in the %files section below.
 chmod 755 $RPM_BUILD_ROOT%{_bindir}/staprun
 
 #install the useful stap-prep script
@@ -432,7 +435,7 @@ exit 0
 
 %files runtime
 %defattr(-,root,root)
-%attr(4111,root,root) %{_bindir}/staprun
+%attr(4110,root,stapusr) %{_bindir}/staprun
 %{_bindir}/stap-report
 %{_bindir}/stap-authorize-signing-cert
 %{_libexecdir}/%{name}/stapio
@@ -511,6 +514,10 @@ exit 0
 
 
 %changelog
+* Tue Nov 16 2010 David Smith <dsmith@redhat.com> - 1.3-3
+- CVE-2010-4170
+- CVE-2010-4171
+
 * Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-2
 - Disable crash on ppc.
 
