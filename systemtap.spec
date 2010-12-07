@@ -64,7 +64,7 @@ BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 # file-based buildreq on '/usr/share/xmlto/format/fo/pdf'.
 BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %if %{with_publican}
-BuildRequires: publican
+BuildRequires: publican >= 2.5
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %endif
@@ -514,6 +514,9 @@ exit 0
 
 
 %changelog
+* Tue Dec 07 2010 Dan Horák <dan[at]danny.cz> - 1.3-4
+- publican now needs a versioned BR (see /usr/bin/publican for details)
+
 * Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-2
 - Disable crash on ppc.
 
