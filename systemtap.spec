@@ -520,6 +520,10 @@ exit 0
 * Tue Dec 07 2010 Dan Horák <dan[at]danny.cz> - 1.3-4
 - publican now needs a versioned BR (see /usr/bin/publican for details)
 
+* Tue Nov 16 2010 David Smith <dsmith@redhat.com> - 1.3-3
+- CVE-2010-4170
+- CVE-2010-4171
+
 * Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-2
 - Disable crash on ppc.
 
