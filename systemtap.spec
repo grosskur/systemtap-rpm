@@ -1,10 +1,6 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
-%ifarch ppc # crash is not available
-%{!?with_crash: %global with_crash 0}
-%else
 %{!?with_crash: %global with_crash 1}
-%endif
 %{!?with_rpm: %global with_rpm 1}
 %{!?with_bundled_elfutils: %global with_bundled_elfutils 0}
 %{!?elfutils_version: %global elfutils_version 0.127}
@@ -15,8 +11,8 @@
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
-Version: 1.3
-Release: 4%{?dist}
+Version: 1.4
+Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -24,8 +20,6 @@ License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
-#Patch1 is elfutils-portability.patch below
-Patch2: rhbz653606,653604.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
@@ -66,7 +60,7 @@ BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 # file-based buildreq on '/usr/share/xmlto/format/fo/pdf'.
 BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %if %{with_publican}
-BuildRequires: publican >= 2.5
+BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %endif
@@ -191,7 +185,6 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
-%patch2 -p1
 
 %build
 
@@ -347,8 +340,8 @@ if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
    runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
    # Authorize the certificate as a trusted ssl peer and as a trusted signer
    # on the local host.
-   %{_bindir}/stap-authorize-server-cert ~stap-server/.systemtap/ssl/server/stap.cert
-   %{_bindir}/stap-authorize-signing-cert ~stap-server/.systemtap/ssl/server/stap.cert
+   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/ssl/client >/dev/null
+   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/staprun >/dev/null
 fi
 
 # Activate the service
@@ -436,6 +429,7 @@ exit 0
 %files runtime
 %defattr(-,root,root)
 %attr(4110,root,stapusr) %{_bindir}/staprun
+%{_bindir}/stap-merge
 %{_bindir}/stap-report
 %{_bindir}/stap-authorize-signing-cert
 %{_libexecdir}/%{name}/stapio
@@ -486,12 +480,14 @@ exit 0
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
 %dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
 %ghost %config %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
+%ghost %attr(0755,stap-server,stap-server) %{_localstatedir}/run/stap-server
 %doc initscript/README.stap-server
 
 %files sdt-devel
 %defattr(-,root,root)
 %{_bindir}/dtrace
 %{_includedir}/sys/sdt.h
+%{_includedir}/sys/sdt-config.h
 %doc README AUTHORS NEWS COPYING
 
 %files initscript
@@ -502,7 +498,7 @@ exit 0
 %dir %{_sysconfdir}/systemtap/script.d
 %config(noreplace) %{_sysconfdir}/systemtap/config
 %dir %{_localstatedir}/cache/systemtap
-%dir %{_localstatedir}/run/systemtap
+%ghost %{_localstatedir}/run/systemtap
 %doc initscript/README.systemtap
 
 %if %{with_grapher}
@@ -514,16 +510,6 @@ exit 0
 
 
 %changelog
-* Tue Dec 07 2010 Dan Horák <dan[at]danny.cz> - 1.3-4
-- publican now needs a versioned BR (see /usr/bin/publican for details)
-
-* Tue Nov 16 2010 David Smith <dsmith@redhat.com> - 1.3-3
-- CVE-2010-4170
-- CVE-2010-4171
-
-* Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-2
-- Disable crash on ppc.
-
 * Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-1
 - Upstream release.
 
