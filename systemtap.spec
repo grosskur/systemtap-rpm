@@ -514,6 +514,9 @@ exit 0
 
 
 %changelog
+* Mon Jan 17 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-1
+- Upstream release.
+
 * Tue Dec 07 2010 Dan Horák <dan[at]danny.cz> - 1.3-4
 - publican now needs a versioned BR (see /usr/bin/publican for details)
 
