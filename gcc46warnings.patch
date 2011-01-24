@@ -1,0 +1,110 @@
+commit 5d8a0aeabbbf3d2e4d0a6c51e6ca9b6d9446c8a0
+Author: Frank Ch. Eigler <fche@redhat.com>
+Date:   Mon Jan 24 13:30:04 2011 -0500
+
+    GCC 4.6 unused-variable warnings
+    
+    We set a couple of variables that later code doesn't use.  GCC 4.6
+    warns about them, which our C*FLAGS=-Werror turned into a build failure.
+    Worked around these by adding a (void) var; to add a dummy use.
+
+diff --git a/grapher/grapher.cxx b/grapher/grapher.cxx
+index 0111184..87489af 100644
+--- a/grapher/grapher.cxx
++++ b/grapher/grapher.cxx
+@@ -72,11 +72,13 @@ extern "C"
+              strerror_r(errno, errbuf, sizeof(errbuf));
+              err = write(STDERR_FILENO, errbuf, strlen(errbuf));
+              err = write(STDERR_FILENO, "\n", 1);
++             (void) err; /* XXX: notused */
+              return;
+            }
+          else if (childInfo.pid > 0)
+            {
+              err = write(signalPipe[1], &childInfo, sizeof(childInfo));
++             (void) err; /* XXX: notused */
+            }
+          else
+            return;
+diff --git a/runtime/staprun/common.c b/runtime/staprun/common.c
+index 4fbc9e5..99026fb 100644
+--- a/runtime/staprun/common.c
++++ b/runtime/staprun/common.c
+@@ -399,6 +399,7 @@ static void fatal_handler (int signum)
+         rc = write (STDERR_FILENO, ERR_MSG, sizeof(ERR_MSG));
+         rc = write (STDERR_FILENO, str, strlen(str));
+         rc = write (STDERR_FILENO, "\n", 1);
++        (void) rc; /* notused */
+ 	_exit(1);
+ }
+ 
+diff --git a/runtime/staprun/mainloop.c b/runtime/staprun/mainloop.c
+index 2733c2e..1514969 100644
+--- a/runtime/staprun/mainloop.c
++++ b/runtime/staprun/mainloop.c
+@@ -60,6 +60,7 @@ static void chld_proc(int signum)
+     return;
+   // send STP_EXIT
+   rc = write(control_channel, &btype, sizeof(btype));
++  (void) rc; /* XXX: notused */
+ }
+ 
+ #if WORKAROUND_BZ467568
+@@ -622,6 +623,7 @@ int stp_main_loop(void)
+         dbug(2, "got STP_REQUEST_EXIT\n");
+         int32_t rc, btype = STP_EXIT;
+         rc = write(control_channel, &btype, sizeof(btype));
++        (void) rc; /* XXX: notused */
+         break;
+       }
+     case STP_START:
+diff --git a/tapsets.cxx b/tapsets.cxx
+index b141921..4daae5e 100644
+--- a/tapsets.cxx
++++ b/tapsets.cxx
+@@ -5341,7 +5341,6 @@ sdt_query::handle_probe_entry()
+   probe *new_base = convert_location();
+   probe_point *new_location = new_base->locations[0];
+ 
+-  bool kprobe_found = false;
+   bool need_debug_info = false;
+ 
+   Dwarf_Addr bias;
+@@ -5351,7 +5350,6 @@ sdt_query::handle_probe_entry()
+   if (have_kprobe())
+     {
+       convert_probe(new_base);
+-      kprobe_found = true;
+       // Expand the local variables in the probe body
+       sdt_kprobe_var_expanding_visitor svv (module_val,
+ 					    provider_name,
+@@ -7726,13 +7724,15 @@ hwbkpt_builder::build(systemtap_session & sess,
+ 							    "",len,0,
+ 							    has_write,
+ 							    has_rw));
+-  else // has symbol_str
++  else if (has_symbol_str)
+       finished_results.push_back (new hwbkpt_derived_probe (base,
+ 							    location,
+ 							    0,
+ 							    symbol_str_val,len,0,
+ 							    has_write,
+ 							    has_rw));
++  else
++    assert (0);
+ }
+ 
+ // ------------------------------------------------------------------------
+diff --git a/translate.cxx b/translate.cxx
+index e5038f9..82f3ee4 100644
+--- a/translate.cxx
++++ b/translate.cxx
+@@ -4447,6 +4447,8 @@ c_unparser::visit_print_format (print_format* e)
+ 	if (components[i].prectype == print_format::prec_dynamic)
+ 	  prec_ix = arg_ix++;
+ 
++        (void) width_ix; /* XXX: notused */
++
+         /* %m and %M need special care for digging into memory. */
+ 	if (components[i].type == print_format::conv_memory
+ 	    || components[i].type == print_format::conv_memory_hex)

@@ -58,6 +58,7 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
 Patch2: sdt-regtable.patch
 Patch3: clonestopped.patch
+Patch4: gcc46warnings.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -184,6 +185,7 @@ data from SystemTap instrumentation scripts.
 
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %if %{with_bundled_elfutils}
 cd elfutils-%{elfutils_version}
@@ -521,6 +523,7 @@ exit 0
 %changelog
 * Mon Jan 19 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-3
 - adapt to kernel CLONE_STOPPED deprecation
+- adapt to gcc 4.6 unused variable warnings
 
 * Mon Jan 19 2011 Stan Cox <scox@redhat.com> - 1.4-2
 - sdt fixes
