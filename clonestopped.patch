@@ -1,0 +1,20 @@
+commit b30b7ed14e6734e0b5b216729aad0e465412c4b1
+Author: Lukas Berk <lberk@redhat.com>
+Date:   Mon Jan 24 12:09:29 2011 -0500
+
+    adding #ifdef CLONE_STOPPED to stop module compilation error
+
+diff --git a/tapset/aux_syscalls.stp b/tapset/aux_syscalls.stp
+index e9a9750..25ca345 100644
+--- a/tapset/aux_syscalls.stp
++++ b/tapset/aux_syscalls.stp
+@@ -1616,7 +1616,9 @@ static const _stp_val_array const _stp_fork_list[] = {
+ 	V(CLONE_DETACHED),
+ 	V(CLONE_UNTRACED),
+ 	V(CLONE_CHILD_SETTID),
++#ifdef CLONE_STOPPED
+ 	V(CLONE_STOPPED),
++#endif
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19)
+ 	V(CLONE_NEWUTS),
+ 	V(CLONE_NEWIPC),
