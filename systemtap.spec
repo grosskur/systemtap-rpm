@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -521,6 +521,9 @@ exit 0
 
 
 %changelog
+* Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
 * Mon Jan 19 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-3
 - adapt to kernel CLONE_STOPPED deprecation
 - adapt to gcc 4.6 unused variable warnings
