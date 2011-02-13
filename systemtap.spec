@@ -1,6 +1,6 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
-%ifarch ppc # crash is not available
+%ifarch ppc %{sparc} # crash is not available
 %{!?with_crash: %global with_crash 0}
 %else
 %{!?with_crash: %global with_crash 1}
@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.4
-Release: 4%{?dist}
+Release: 5%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -521,6 +521,9 @@ exit 0
 
 
 %changelog
+* Sun Feb 13 2011 Dennis Gilmore <dennis@ausil.us> - 1.4-5
+- no crash on sparc
+
 * Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
 
