@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.4
-Release: 6%{?dist}
+Release: 7%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -59,6 +59,7 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 Patch2: sdt-regtable.patch
 Patch3: clonestopped.patch
 Patch4: gcc46warnings.patch
+Patch5: bz702687.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -186,6 +187,7 @@ data from SystemTap instrumentation scripts.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 %if %{with_bundled_elfutils}
 cd elfutils-%{elfutils_version}
@@ -521,6 +523,9 @@ exit 0
 
 
 %changelog
+* Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-7
+- CVE-2011-1781, CVE-2011-1769
+
 * Wed May 04 2011 Dennis Gilmore <dennis@ausil.us> - 1.4-6
 - no crash on arm
 
