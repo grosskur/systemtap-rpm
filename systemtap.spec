@@ -11,12 +11,12 @@
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
-%{!?with_publican: %global with_publican 1}
+%{!?with_publican: %global with_publican 0}
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
 Version: 1.4
-Release: 8%{?dist}
+Release: 9%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -523,7 +523,7 @@ exit 0
 
 
 %changelog
-* Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-8
+* Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-9
 - Disable documentation builds temporarily, due to bug #704298.
 
 * Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-7
