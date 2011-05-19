@@ -1,5 +1,5 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 1}
+%{!?with_docs: %global with_docs 0}
 %ifarch ppc %{sparc} %{arm}# crash is not available
 %{!?with_crash: %global with_crash 0}
 %else
@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.4
-Release: 7%{?dist}
+Release: 8%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -523,6 +523,9 @@ exit 0
 
 
 %changelog
+* Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-8
+- Disable documentation builds temporarily, due to bug #704298.
+
 * Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-7
 - CVE-2011-1781, CVE-2011-1769
 
