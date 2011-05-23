@@ -1,22 +1,18 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 0}
-%ifarch ppc %{sparc} %{arm}# crash is not available
-%{!?with_crash: %global with_crash 0}
-%else
+%{!?with_docs: %global with_docs 1}
 %{!?with_crash: %global with_crash 1}
-%endif
 %{!?with_rpm: %global with_rpm 1}
 %{!?with_bundled_elfutils: %global with_bundled_elfutils 0}
 %{!?elfutils_version: %global elfutils_version 0.127}
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
-%{!?with_publican: %global with_publican 0}
+%{!?with_publican: %global with_publican 1}
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
-Version: 1.4
-Release: 9%{?dist}
+Version: 1.5
+Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -24,9 +20,12 @@ License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
+Obsoletes: systemtap-client < 1.5
+
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires: kernel >= 2.6.9-11
+BuildRequires: gettext
 %if %{with_sqlite}
 BuildRequires: sqlite-devel
 %endif
@@ -46,7 +45,11 @@ Requires: kernel-devel
 Requires: gcc make
 # Suggest: kernel-debuginfo
 Requires: systemtap-runtime = %{version}-%{release}
-BuildRequires: nss-tools nss-devel avahi-devel pkgconfig
+BuildRequires: nss-devel avahi-devel pkgconfig
+
+# Additional requires for things spawned by stap
+Requires: coreutils grep sed unzip zip
+Requires: openssh-clients
 
 %if %{with_bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
@@ -56,10 +59,6 @@ BuildRequires: m4
 %else
 BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
-Patch2: sdt-regtable.patch
-Patch3: clonestopped.patch
-Patch4: gcc46warnings.patch
-Patch5: bz702687.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -68,7 +67,7 @@ BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 # file-based buildreq on '/usr/share/xmlto/format/fo/pdf'.
 BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %if %{with_publican}
-BuildRequires: publican >= 2.5
+BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %endif
@@ -82,6 +81,7 @@ BuildRequires: libglademm24-devel >= 2.6.7
 BuildRequires: boost-devel
 %endif
 %endif
+BuildRequires: gettext-devel
 
 %description
 SystemTap is an instrumentation system for systems running Linux 2.6.
@@ -112,28 +112,13 @@ Requires: systemtap systemtap-sdt-devel dejagnu which prelink
 The testsuite allows testing of the entire SystemTap toolchain
 without having to rebuild from sources.
 
-%package client
-Summary: Instrumentation System Client
-Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
-Requires: systemtap-runtime = %{version}-%{release}
-Requires: avahi avahi-tools nss nss-tools mktemp
-Requires: zip unzip
-
-%description client
-This is the remote script compilation client component of systemtap.
-It relies on a nearby compilation server to translate systemtap
-scripts to kernel objects, so a client workstation only needs the
-runtime, and not the compiler/etc toolchain.
-
 %package server
 Summary: Instrumentation System Server
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: systemtap
-Requires: avahi avahi-tools nss nss-tools mktemp
+Requires: avahi avahi-tools nss mktemp
 Requires: zip unzip
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -148,7 +133,7 @@ scripts to kernel objects on their demand.
 %package sdt-devel
 Summary: Static probe support tools
 Group: Development/System
-License: GPLv2+, Public Domain
+License: GPLv2+ and Public Domain
 URL: http://sourceware.org/systemtap/
 
 %description sdt-devel
@@ -183,11 +168,6 @@ data from SystemTap instrumentation scripts.
 
 %prep
 %setup -q %{?setup_elfutils}
-
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
 
 %if %{with_bundled_elfutils}
 cd elfutils-%{elfutils_version}
@@ -269,6 +249,7 @@ make %{?_smp_mflags}
 %install
 rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
+%find_lang %{name}
 
 # We want the examples in the special doc dir, not the build install dir.
 # We build it in place and then move it away so it doesn't get installed
@@ -278,6 +259,9 @@ mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/examples examples
 
 # Fix paths in the example & testsuite scripts
 find examples testsuite -type f -name '*.stp' -print0 | xargs -0 sed -i -r -e '1s@^#!.+stap@#!%{_bindir}/stap@'
+
+# To make rpmlint happy, remove any .gitignore files in the testsuite.
+find testsuite -type f -name '.gitignore' -print0 | xargs -0 rm -f
 
 # Because "make install" may install staprun with whatever mode, the
 # post-processing programs rpmbuild runs won't be able to read it.
@@ -409,7 +393,7 @@ exit 0
 (make -C %{_datadir}/%{name}/runtime/uprobes clean) >/dev/null 2>&1 || true
 (/sbin/rmmod uprobes) >/dev/null 2>&1 || true
 
-%files
+%files -f %{name}.lang
 %defattr(-,root,root)
 
 %doc README AUTHORS NEWS COPYING examples
@@ -424,7 +408,9 @@ exit 0
 %{_bindir}/stap
 %{_bindir}/stap-prep
 %{_bindir}/stap-report
-%{_mandir}/man1/*
+%{_mandir}/man1/stap.1*
+%{_mandir}/man1/stapgraph.1*
+%{_mandir}/man1/stap-merge.1*
 %{_mandir}/man3/*
 %{_mandir}/man7/stappaths.7*
 
@@ -439,12 +425,12 @@ exit 0
 # Make sure that the uprobes module can be built by root and by the server
 %dir %attr(0775,root,stap-server) %{_datadir}/%{name}/runtime/uprobes
 
-%files runtime
+%files runtime -f %{name}.lang
 %defattr(-,root,root)
 %attr(4110,root,stapusr) %{_bindir}/staprun
+%{_bindir}/stapsh
 %{_bindir}/stap-merge
 %{_bindir}/stap-report
-%{_bindir}/stap-authorize-signing-cert
 %{_libexecdir}/%{name}/stapio
 %{_libexecdir}/%{name}/stap-env
 %{_libexecdir}/%{name}/stap-authorize-cert
@@ -453,7 +439,6 @@ exit 0
 %endif
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man8/staprun.8*
-%{_mandir}/man8/stap-authorize-signing-cert.8*
 
 %doc README AUTHORS NEWS COPYING
 
@@ -461,38 +446,23 @@ exit 0
 %defattr(-,root,root)
 %{_datadir}/%{name}/testsuite
 
-%files client
+%files server -f %{name}.lang
 %defattr(-,root,root)
-%{_bindir}/stap-client
-%{_bindir}/stap-authorize-server-cert
-%{_libexecdir}/%{name}/stap-find-servers
-%{_libexecdir}/%{name}/stap-client-connect
-%{_mandir}/man7/stappaths.7*
-%{_mandir}/man8/stap-client.8*
-%{_mandir}/man8/stap-authorize-server-cert.8*
-
-%files server
-%defattr(-,root,root)
-%{_bindir}/stap-authorize-server-cert
 %{_bindir}/stap-server
 %{_libexecdir}/%{name}/stap-serverd
 %{_libexecdir}/%{name}/stap-start-server
-%{_libexecdir}/%{name}/stap-find-servers
-%{_libexecdir}/%{name}/stap-find-or-start-server
 %{_libexecdir}/%{name}/stap-stop-server
 %{_libexecdir}/%{name}/stap-gen-cert
-%{_libexecdir}/%{name}/stap-server-connect
 %{_libexecdir}/%{name}/stap-sign-module
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man8/stap-server.8*
-%{_mandir}/man8/stap-authorize-server-cert.8*
 %{_sysconfdir}/rc.d/init.d/stap-server
 %config(noreplace) %{_sysconfdir}/logrotate.d/stap-server
 %dir %{_sysconfdir}/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
 %dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
-%ghost %config %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
+%ghost %config(noreplace) %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
 %ghost %attr(0755,stap-server,stap-server) %{_localstatedir}/run/stap-server
 %doc initscript/README.stap-server
 
@@ -501,6 +471,7 @@ exit 0
 %{_bindir}/dtrace
 %{_includedir}/sys/sdt.h
 %{_includedir}/sys/sdt-config.h
+%{_mandir}/man1/dtrace.1*
 %doc README AUTHORS NEWS COPYING
 
 %files initscript
@@ -523,40 +494,8 @@ exit 0
 
 
 %changelog
-* Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-9
-- Disable documentation builds temporarily, due to bug #704298.
-
-* Wed May 18 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-7
-- CVE-2011-1781, CVE-2011-1769
-
-* Wed May 04 2011 Dennis Gilmore <dennis@ausil.us> - 1.4-6
-- no crash on arm
-
-* Sun Feb 13 2011 Dennis Gilmore <dennis@ausil.us> - 1.4-5
-- no crash on sparc
-
-* Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
-
-* Mon Jan 19 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-3
-- adapt to kernel CLONE_STOPPED deprecation
-- adapt to gcc 4.6 unused variable warnings
-
-* Mon Jan 19 2011 Stan Cox <scox@redhat.com> - 1.4-2
-- sdt fixes
-
 * Mon Jan 17 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-1
 - Upstream release.
-
-* Tue Dec 07 2010 Dan Horák <dan[at]danny.cz> - 1.3-4
-- publican now needs a versioned BR (see /usr/bin/publican for details)
-
-* Tue Nov 16 2010 David Smith <dsmith@redhat.com> - 1.3-3
-- CVE-2010-4170
-- CVE-2010-4171
-
-* Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-2
-- Disable crash on ppc.
 
 * Wed Jul 21 2010 Josh Stone <jistone@redhat.com> - 1.3-1
 - Upstream release.
