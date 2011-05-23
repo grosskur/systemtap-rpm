@@ -498,6 +498,9 @@ exit 0
 
 
 %changelog
+* Mon May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
+- Upstream release.
+
 * Mon Jan 17 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-1
 - Upstream release.
 
