@@ -1,13 +1,17 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 1}
+%{!?with_docs: %global with_docs 0}
+%ifarch ppc %{sparc} %{arm}# crash is not available
+%{!?with_crash: %global with_crash 0}
+%else
 %{!?with_crash: %global with_crash 1}
+%endif
 %{!?with_rpm: %global with_rpm 1}
 %{!?with_bundled_elfutils: %global with_bundled_elfutils 0}
 %{!?elfutils_version: %global elfutils_version 0.127}
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
-%{!?with_publican: %global with_publican 1}
+%{!?with_publican: %global with_publican 0}
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
