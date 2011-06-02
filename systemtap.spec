@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -139,6 +139,7 @@ Summary: Static probe support tools
 Group: Development/System
 License: GPLv2+ and Public Domain
 URL: http://sourceware.org/systemtap/
+Requires: /usr/bin/python
 
 %description sdt-devel
 Support tools to allow applications to use static probes.
@@ -498,6 +499,9 @@ exit 0
 
 
 %changelog
+* Thu Jun  2 2011 Stan Cox <scox@redhat.com> - 1.5-2
+- Add explicit 'Requires python' dependency
+
 * Mon May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
 - Upstream release.
 
