@@ -1,0 +1,103 @@
+commit b571f9347c4a54facadb5e948e1430bd2b89158a
+Author: Stan Cox <scox@redhat.com>
+Date:   Fri Jun 10 09:42:43 2011 -0400
+
+    Don't process the dtrace -o FILENAME.
+    
+    dtrace.in (main):  Use suffix for both -h and -G.  Check gcc return code.
+    dtrace.exp:  Massage results accordingly.
+
+diff --git a/dtrace.in b/dtrace.in
+index a64d110..91762bd 100755
+--- a/dtrace.in
++++ b/dtrace.in
+@@ -191,7 +191,7 @@ def main():
+     add_typedefs = False
+     keep_temps = False
+     use_cpp = False
+-    h_ext = '.h'
++    suffix = ""
+     filename = ""
+     s_filename = ""
+     includes = []
+@@ -209,10 +209,12 @@ def main():
+             defines.append(sys.argv[i])
+         elif (sys.argv[i] == "-h"):
+             build_header = True
++            suffix = ".h"
+         elif (sys.argv[i].startswith("-I")):
+             includes.append(sys.argv[i])
+         elif (sys.argv[i] == "-G"):
+             build_source = True
++            suffix = ".o"
+         elif (sys.argv[i] == "-k"):
+             keep_temps = True
+         elif (sys.argv[i] == "--types"):
+@@ -242,13 +244,10 @@ def main():
+             usage()
+             sys.exit(1)
+     else:
+-        if (build_header):
+-            h_ext = ""
+-        else:
+-            (filename,ext) = os.path.splitext(filename)
++        suffix = ""
+     if (build_header):
+         providers = _provider()
+-        providers.generate(s_filename, filename + h_ext, add_typedefs)
++        providers.generate(s_filename, filename + suffix, add_typedefs)
+     elif (build_source):
+         (basename,ext) = os.path.splitext(s_filename)
+ 
+@@ -269,9 +268,13 @@ def main():
+         f.close()
+         CC = os.environ.get("CC", "gcc")
+         CFLAGS = "-g " + os.environ.get("CFLAGS", "")
+-        call([CC, "-fPIC"] + defines + includes + CFLAGS.split() +
++        retcode = call([CC, "-fPIC"] + defines + includes + CFLAGS.split() +
+              ["-I.", "-I@prefix@/include", "-c", fn, "-o",
+-              filename + ".o"], shell=False)
++              filename + suffix], shell=False)
++        if (retcode != 0):
++            print "\"gcc " + fn + "\" failed"
++            usage()
++            sys.exit(1)
+         if (not keep_temps):
+             os.remove(fn)
+         else:
+diff --git a/testsuite/systemtap.base/dtrace.exp b/testsuite/systemtap.base/dtrace.exp
+index b301793..cd97c79 100644
+--- a/testsuite/systemtap.base/dtrace.exp
++++ b/testsuite/systemtap.base/dtrace.exp
+@@ -60,12 +60,12 @@ exec rm -f XXX.o
+ 
+ verbose -log "$dtrace -G -s $dpath -o XXX"
+ catch {exec $dtrace -G -s $dpath -o XXX}
+-if {[file exists XXX.o]} then {
++if {[file exists XXX]} then {
+     pass "dtrace -G -o XXX"
+ } else {
+     fail "dtrace -G -o XXX"
+ }
+-exec rm -f XXX.o
++exec rm -f XXX
+ 
+ verbose -log "$dtrace -h -s $dpath -o XXX.h"
+ catch {exec $dtrace -h -s $dpath -o XXX.h}
+@@ -96,12 +96,12 @@ exec rm -f /tmp/XXX.o
+ 
+ verbose -log "$dtrace -G -s $dpath -o /tmp/XXX"
+ catch {exec $dtrace -G -s $dpath -o /tmp/XXX}
+-if {[file exists /tmp/XXX.o]} then {
+-    pass "dtrace -G -o /tmp/XXX.o"
++if {[file exists /tmp/XXX]} then {
++    pass "dtrace -G -o /tmp/XXX"
+ } else {
+-    fail "dtrace -G -o /tmp/XXX.o"
++    fail "dtrace -G -o /tmp/XXX"
+ }
+-exec rm -f /tmp/XXX.o
++exec rm -f /tmp/XXX
+ 
+ verbose -log "$dtrace -h -s $dpath -o /tmp/XXX.h"
+ catch {exec $dtrace -h -s $dpath -o /tmp/XXX.h}

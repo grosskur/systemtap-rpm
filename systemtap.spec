@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.5
-Release: 2%{?dist}
+Release: 3%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -63,6 +63,8 @@ BuildRequires: m4
 %else
 BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
+
+Patch2: rhbz711427.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -183,6 +185,8 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+
+%patch2 -p1
 
 %build
 
@@ -499,6 +503,9 @@ exit 0
 
 
 %changelog
+* Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-3
+- Don't massage dtrace -o FILENAME arg
+
 * Thu Jun  2 2011 Stan Cox <scox@redhat.com> - 1.5-2
 - Add explicit 'Requires python' dependency
 
