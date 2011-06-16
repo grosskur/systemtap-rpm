@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.5
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -503,6 +503,9 @@ exit 0
 
 
 %changelog
+* Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-4
+- Split $CC
+
 * Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-3
 - Don't massage dtrace -o FILENAME arg
 
