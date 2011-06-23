@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.5
-Release: 4%{?dist}
+Release: 5%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -64,7 +64,8 @@ BuildRequires: m4
 BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
 
-Patch2: rhbz711427.patch
+Patch2: swbz12899.patch
+Patch3: swbz12927.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -141,7 +142,6 @@ Summary: Static probe support tools
 Group: Development/System
 License: GPLv2+ and Public Domain
 URL: http://sourceware.org/systemtap/
-Requires: /usr/bin/python
 
 %description sdt-devel
 Support tools to allow applications to use static probes.
@@ -187,6 +187,7 @@ cd ..
 %endif
 
 %patch2 -p1
+%patch3 -p1
 
 %build
 
@@ -503,8 +504,12 @@ exit 0
 
 
 %changelog
+* Thu Jun 23 2011 Stan Cox <scox@redhat.com> - 1.5-5
+- PR 12927
+- Remove explicit 'Requires python' dependency
+
 * Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-4
-- Split $CC
+- PR 12899
 
 * Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-3
 - Don't massage dtrace -o FILENAME arg
