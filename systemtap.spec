@@ -1,6 +1,6 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 0}
-%ifarch ppc %{sparc} %{arm}# crash is not available
+%ifarch ppc %{sparc} %{arm} # crash is not available
 %{!?with_crash: %global with_crash 0}
 %else
 %{!?with_crash: %global with_crash 1}
@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.5
-Release: 5%{?dist}
+Release: 6%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -504,9 +504,8 @@ exit 0
 
 
 %changelog
-* Thu Jun 23 2011 Stan Cox <scox@redhat.com> - 1.5-5
-- PR 12927
-- Remove explicit 'Requires python' dependency
+* Mon Jul 11 2011 William Cohen <wcohen@redhat.com> - 1.5-6
+- there is no crash available on arm arches
 
 * Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-4
 - PR 12899
