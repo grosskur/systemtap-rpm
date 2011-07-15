@@ -16,13 +16,15 @@
 
 Name: systemtap
 Version: 1.5
-Release: 6%{?dist}
+Release: 7%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+
+Patch25: systemtap-sdt.patch
 
 Obsoletes: systemtap-client < 1.5
 
@@ -188,6 +190,8 @@ cd ..
 
 %patch2 -p1
 %patch3 -p1
+
+%patch25 -p1
 
 %build
 
@@ -504,6 +508,9 @@ exit 0
 
 
 %changelog
+* Fri Jul 15 2011 William Cohen <wcohen@redhat.com> - 1.5-7
+- Fix sdt.h to avoid warning on arm arches.
+
 * Mon Jul 11 2011 William Cohen <wcohen@redhat.com> - 1.5-6
 - there is no crash available on arm arches
 
