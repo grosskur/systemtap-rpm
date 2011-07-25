@@ -11,7 +11,7 @@
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
-%{!?with_publican: %global with_publican 1}
+%{!?with_publican: %global with_publican 0}
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
