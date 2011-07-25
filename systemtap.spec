@@ -1,5 +1,5 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 0}
+%{!?with_docs: %global with_docs 1}
 %ifarch ppc %{sparc} %{arm} # crash is not available
 %{!?with_crash: %global with_crash 0}
 %else
@@ -7,24 +7,22 @@
 %endif
 %{!?with_rpm: %global with_rpm 1}
 %{!?with_bundled_elfutils: %global with_bundled_elfutils 0}
-%{!?elfutils_version: %global elfutils_version 0.127}
+%{!?elfutils_version: %global elfutils_version 0.142}
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
-%{!?with_publican: %global with_publican 0}
+%{!?with_publican: %global with_publican 1}
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
-Version: 1.5
-Release: 8%{?dist}
+Version: 1.6
+Release: 1%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-
-Patch25: systemtap-sdt.patch
 
 Obsoletes: systemtap-client < 1.5
 
@@ -66,11 +64,6 @@ BuildRequires: m4
 BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
 
-Patch2: swbz12899.patch
-Patch3: swbz12927.patch
-Patch4: cve-2011-2502.patch
-Patch5: cve-2011-2503.patch
-
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 # On F10, xmlto's pdf support was broken off into a sub-package,
@@ -95,7 +88,7 @@ BuildRequires: boost-devel
 BuildRequires: gettext-devel
 
 %description
-SystemTap is an instrumentation system for systems running Linux 2.6.
+SystemTap is an instrumentation system for systems running Linux.
 Developers can write instrumentation to collect data on the operation
 of the system.
 
@@ -109,7 +102,7 @@ Requires(pre): shadow-utils
 
 %description runtime
 SystemTap runtime is the runtime component of an instrumentation
-system for systems running Linux 2.6.  Developers can write
+system for systems running Linux.  Developers can write
 instrumentation to collect data on the operation of the system.
 
 %package testsuite
@@ -117,7 +110,9 @@ Summary: Instrumentation System Testsuite
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: systemtap systemtap-sdt-devel dejagnu which prelink
+Requires: systemtap = %{version}-%{release}
+Requires: systemtap-sdt-devel = %{version}-%{release}
+Requires: dejagnu which prelink
 
 %description testsuite
 The testsuite allows testing of the entire SystemTap toolchain
@@ -128,7 +123,7 @@ Summary: Instrumentation System Server
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: systemtap
+Requires: systemtap = %{version}-%{release}
 Requires: avahi avahi-tools nss mktemp
 Requires: zip unzip
 Requires(post): chkconfig
@@ -155,7 +150,7 @@ Summary: Systemtap Initscripts
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: systemtap-runtime
+Requires: systemtap-runtime = %{version}-%{release}
 Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
@@ -170,7 +165,7 @@ Summary: Instrumentation System Grapher
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: systemtap-runtime
+Requires: systemtap-runtime = %{version}-%{release}
 
 %description grapher
 SystemTap grapher is a utility for real-time visualization of
@@ -189,13 +184,6 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
-
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-
-%patch25 -p1
 
 %build
 
@@ -414,7 +402,7 @@ exit 0
 %files -f %{name}.lang
 %defattr(-,root,root)
 
-%doc README AUTHORS NEWS COPYING examples
+%doc README README.unprivileged AUTHORS NEWS COPYING examples
 %if %{with_docs}
 %doc docs.installed/*.pdf
 %doc docs.installed/tapsets
@@ -427,7 +415,6 @@ exit 0
 %{_bindir}/stap-prep
 %{_bindir}/stap-report
 %{_mandir}/man1/stap.1*
-%{_mandir}/man1/stapgraph.1*
 %{_mandir}/man1/stap-merge.1*
 %{_mandir}/man3/*
 %{_mandir}/man7/stappaths.7*
@@ -458,7 +445,7 @@ exit 0
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man8/staprun.8*
 
-%doc README AUTHORS NEWS COPYING
+%doc README README.security AUTHORS NEWS COPYING
 
 %files testsuite
 %defattr(-,root,root)
@@ -508,10 +495,14 @@ exit 0
 %defattr(-,root,root)
 %{_bindir}/stapgraph
 %{_datadir}/%{name}/*.glade
+%{_mandir}/man1/stapgraph.1*
 %endif
 
 
 %changelog
+* Mon Jul 25 2011 Stan Cox <scox@redhat.com> - 1.6-1
+- Upstream release.
+
 * Mon Jul 25 2011 Frank Ch. Eigler <fche@redhat.com> - 1.5-8
 - CVE-2011-2502, CVE-2011-2503
 
