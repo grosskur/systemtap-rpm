@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.5
-Release: 7%{?dist}
+Release: 8%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -68,6 +68,8 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 
 Patch2: swbz12899.patch
 Patch3: swbz12927.patch
+Patch4: cve-2011-2502.patch
+Patch5: cve-2011-2503.patch
 
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
@@ -190,6 +192,8 @@ cd ..
 
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
+%patch5 -p1
 
 %patch25 -p1
 
@@ -508,6 +512,9 @@ exit 0
 
 
 %changelog
+* Mon Jul 25 2011 Frank Ch. Eigler <fche@redhat.com> - 1.5-8
+- CVE-2011-2502, CVE-2011-2503
+
 * Fri Jul 15 2011 William Cohen <wcohen@redhat.com> - 1.5-7
 - Fix sdt.h to avoid warning on arm arches.
 
