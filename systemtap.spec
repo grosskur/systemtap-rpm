@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -506,6 +506,9 @@ exit 0
 
 
 %changelog
+* Tue Dec 06 2011 Adam Jackson <ajax@redhat.com> - 1.6-2
+- Rebuild for new libpng
+
 * Mon Jul 25 2011 Stan Cox <scox@redhat.com> - 1.6-1
 - Upstream release.
 
