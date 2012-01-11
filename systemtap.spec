@@ -124,7 +124,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: systemtap = %{version}-%{release}
-Requires: avahi avahi-tools nss mktemp
+Requires: avahi avahi-tools nss coreutils
 Requires: zip unzip
 Requires(post): chkconfig
 Requires(preun): chkconfig
