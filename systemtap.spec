@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.6
-Release: 2%{?dist}
+Release: 3%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -506,6 +506,9 @@ exit 0
 
 
 %changelog
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.6-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
 * Tue Dec 06 2011 Adam Jackson <ajax@redhat.com> - 1.6-2
 - Rebuild for new libpng
 
