@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.6
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 Summary: Instrumentation System
 Group: Development/System
@@ -86,6 +86,8 @@ BuildRequires: boost-devel
 %endif
 %endif
 BuildRequires: gettext-devel
+
+Patch2: gcc-4.7.patch
 
 %description
 SystemTap is an instrumentation system for systems running Linux.
@@ -184,6 +186,8 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+
+%patch2 -p1
 
 %build
 
@@ -506,6 +510,9 @@ exit 0
 
 
 %changelog
+* Sat Jan 14 2012 Mark Wielaard <mjw@redhat.com> - 1.6-4
+- Fixes for gcc-4.7 based on upstream commits e14c86 and 47caa9.
+
 * Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.6-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 

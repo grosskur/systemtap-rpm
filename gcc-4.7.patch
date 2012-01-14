@@ -1,0 +1,73 @@
+diff --git a/cache.cxx b/cache.cxx
+index 5104f8d..aaba56f 100644
+--- a/cache.cxx
++++ b/cache.cxx
+@@ -22,6 +22,7 @@ extern "C" {
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <glob.h>
++#include <unistd.h>
+ }
+ 
+ using namespace std;
+diff --git a/csclient.cxx b/csclient.cxx
+index 21f945f..9f8faee 100644
+--- a/csclient.cxx
++++ b/csclient.cxx
+@@ -24,6 +24,7 @@
+ #include <algorithm>
+ 
+ extern "C" {
++#include <unistd.h>
+ #include <linux/limits.h>
+ #include <sys/time.h>
+ #include <glob.h>
+diff --git a/session.cxx b/session.cxx
+index b322600..2436031 100644
+--- a/session.cxx
++++ b/session.cxx
+@@ -30,6 +30,7 @@ extern "C" {
+ #include <sys/stat.h>
+ #include <sys/utsname.h>
+ #include <elfutils/libdwfl.h>
++#include <unistd.h>
+ }
+ 
+ #if HAVE_NSS
+diff --git a/setupdwfl.cxx b/setupdwfl.cxx
+index 71814d7..ee1dbd0 100644
+--- a/setupdwfl.cxx
++++ b/setupdwfl.cxx
+@@ -23,6 +23,7 @@
+ extern "C" {
+ #include <fnmatch.h>
+ #include <stdlib.h>
++#include <unistd.h>
+ }
+ 
+ // XXX: also consider adding $HOME/.debug/ for perf build-id-cache
+diff --git a/stap-serverd.cxx b/stap-serverd.cxx
+index 8ee3b09..9e1345a 100644
+--- a/stap-serverd.cxx
++++ b/stap-serverd.cxx
+@@ -29,6 +29,7 @@
+ #include <map>
+ 
+ extern "C" {
++#include <unistd.h>
+ #include <getopt.h>
+ #include <wordexp.h>
+ #include <glob.h>
+diff --git a/translate.cxx b/translate.cxx
+index 543c908..9d4c137 100644
+--- a/translate.cxx
++++ b/translate.cxx
+@@ -5569,7 +5569,7 @@ emit_symbol_data (systemtap_session& s)
+ 
+   ofstream kallsyms_out ((s.tmpdir + "/" + symfile).c_str());
+ 
+-  unwindsym_dump_context ctx = { s, kallsyms_out, 0, ~0, s.unwindsym_modules };
++  unwindsym_dump_context ctx = { s, kallsyms_out, 0, ~0UL, s.unwindsym_modules };
+ 
+   // Micro optimization, mainly to speed up tiny regression tests
+   // using just begin probe.
