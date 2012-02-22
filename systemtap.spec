@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.7
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 
 
@@ -48,6 +48,8 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+
+Patch10: CVE-2012-0875.patch
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -258,6 +260,8 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+
+%patch10 -p1
 
 %build
 
@@ -596,6 +600,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Feb 22 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-2
+- CVE-2012-0875 (kernel panic when processing malformed DWARF unwind data)
+
 * Wed Feb 01 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-1
 - Upstream release.
 - Reorganize subpackages, new -client and -devel for subset installations.
