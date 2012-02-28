@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.7
-Release: 2%{?dist}
+Release: 3%{?dist}
 # for version, see also configure.ac
 
 
@@ -600,6 +600,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Tue Feb 28 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.7-3
+- Rebuilt for c++ ABI breakage
+
 * Wed Feb 22 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-2
 - CVE-2012-0875 (kernel panic when processing malformed DWARF unwind data)
 
