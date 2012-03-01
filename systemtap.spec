@@ -11,12 +11,16 @@
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
+%ifarch %{arm} # Broken fop/java on ARM.
+%{!?with_publican: %global with_publican 0}
+%else
 %{!?with_publican: %global with_publican 1}
+%endif
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
 Version: 1.7
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 
 
@@ -223,7 +227,10 @@ License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: systemtap = %{version}-%{release}
 Requires: systemtap-sdt-devel = %{version}-%{release}
-Requires: dejagnu which prelink elfutils grep
+Requires: dejagnu which elfutils grep
+%ifnarch %{arm} # no prelink on ARM
+Requires: prelink
+%endif
 
 %description testsuite
 This package includes the dejagnu-based systemtap stress self-testing
@@ -600,6 +607,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Thu Mar 01 2012 Mark Wielaard <mjw@redhat.com> - 1.7-4
+- ARM currently doesn't have publican/fop/java and no prelink.
+
 * Tue Feb 28 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.7-3
 - Rebuilt for c++ ABI breakage
 
