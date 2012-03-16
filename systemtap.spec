@@ -11,16 +11,12 @@
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
-%ifarch %{arm} # Broken fop/java on ARM.
-%{!?with_publican: %global with_publican 0}
-%else
 %{!?with_publican: %global with_publican 1}
-%endif
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
 Version: 1.7
-Release: 4%{?dist}
+Release: 5%{?dist}
 # for version, see also configure.ac
 
 
@@ -607,6 +603,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Fri Mar 16 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-5
+- dbhole advises ARM publican/fop/java is a go for launch.
+
 * Thu Mar 01 2012 Mark Wielaard <mjw@redhat.com> - 1.7-4
 - ARM currently doesn't have publican/fop/java and no prelink.
 
