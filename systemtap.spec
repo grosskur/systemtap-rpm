@@ -11,7 +11,7 @@
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
-%ifarch %{arm} # Broken fop/java on ARM.
+%ifarch %{arm} ppc ppc64 # Broken fop/java on ARM.
 %{!?with_publican: %global with_publican 0}
 %else
 %{!?with_publican: %global with_publican 1}
@@ -20,7 +20,7 @@
 
 Name: systemtap
 Version: 1.7
-Release: 4%{?dist}
+Release: 5%{?dist}
 # for version, see also configure.ac
 
 
@@ -607,6 +607,10 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Fri Mar 16 2012 Karsten Hopp <karsten@redhat.com> 1.7-5
+- disable publican/fop/java on ppc(64) similar to ARM until we have java-1.7 
+ (RHBZ 804136)
+
 * Thu Mar 01 2012 Mark Wielaard <mjw@redhat.com> - 1.7-4
 - ARM currently doesn't have publican/fop/java and no prelink.
 
