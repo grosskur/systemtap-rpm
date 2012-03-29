@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.7
-Release: 5%{?dist}
+Release: 6%{?dist}
 # for version, see also configure.ac
 
 
@@ -603,6 +603,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Thu Mar 29 2012 Richard W.M. Jones <rjones@redhat.com> - 1.7-6
+- Rebuild for rpm soname bump.
+
 * Fri Mar 16 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-5
 - dbhole advises ARM publican/fop/java is a go for launch.
 
