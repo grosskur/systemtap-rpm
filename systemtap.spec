@@ -1,6 +1,6 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
-%ifarch ppc %{sparc} %{arm} # crash is not available
+%ifarch ppc ppc64 %{sparc} %{arm} # crash is not available
 %{!?with_crash: %global with_crash 0}
 %else
 %{!?with_crash: %global with_crash 1}
@@ -16,7 +16,7 @@
 
 Name: systemtap
 Version: 1.7
-Release: 6%{?dist}
+Release: 6.1%{?dist}
 # for version, see also configure.ac
 
 
@@ -51,6 +51,9 @@ Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
 Patch10: CVE-2012-0875.patch
 
+%ifarch ppc ppc64
+%define with_publican 0
+%endif
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gettext
@@ -603,6 +606,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Thu Apr 19 2012 Karsten Hopp <karsten@redhat.com> - 1.7-6.1
+- rebuild on PPC(64) without crash, publican
+
 * Thu Mar 29 2012 Richard W.M. Jones <rjones@redhat.com> - 1.7-6
 - Rebuild for rpm soname bump.
 
