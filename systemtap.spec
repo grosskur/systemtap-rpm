@@ -1,6 +1,7 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
-%ifarch ppc ppc64 %{sparc} %{arm} # crash is not available
+# crash is not available
+%ifarch ppc ppc64 %{sparc}
 %{!?with_crash: %global with_crash 0}
 %else
 %{!?with_crash: %global with_crash 1}
@@ -16,9 +17,11 @@
 
 Name: systemtap
 Version: 1.7
-Release: 6.1%{?dist}
-# for version, see also configure.ac
-
+Release: 7%{?dist}
+Summary: Programmable system-wide instrumentation system
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
 
 # Packaging abstract:
 #
@@ -43,10 +46,6 @@ Release: 6.1%{?dist}
 # intermediary stap-client for --remote:       systemtap-client (-runtime unused)
 # intermediary stap-server for --use-server:   systemtap-server (-devel unused)
 
-Summary: Programmable system-wide instrumentation system
-Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
 Patch10: CVE-2012-0875.patch
@@ -55,8 +54,9 @@ Patch10: CVE-2012-0875.patch
 %define with_publican 0
 %endif
 # Build*
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: gettext
+BuildRequires: gettext-devel
+BuildRequires: nss-devel avahi-devel pkgconfig
+
 %if %{with_sqlite}
 BuildRequires: sqlite-devel
 %endif
@@ -70,7 +70,6 @@ BuildRequires: crash-devel zlib-devel
 %if %{with_rpm}
 BuildRequires: rpm-devel glibc-headers
 %endif
-BuildRequires: nss-devel avahi-devel pkgconfig
 %if %{with_bundled_elfutils}
 Source1: elfutils-%{elfutils_version}.tar.gz
 Patch1: elfutils-portability.patch
@@ -84,7 +83,7 @@ BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 # On F10, xmlto's pdf support was broken off into a sub-package,
 # called 'xmlto-tex'.  To avoid a specific F10 BuildReq, we'll do a
 # file-based buildreq on '/usr/share/xmlto/format/fo/pdf'.
-BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
+BuildRequires: xmlto, xmlto-tex
 %if %{with_publican}
 BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
@@ -99,7 +98,6 @@ BuildRequires: libglademm24-devel >= 2.6.7
 BuildRequires: boost-devel
 %endif
 %endif
-BuildRequires: gettext-devel
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -116,8 +114,6 @@ the components needed to locally develop and execute systemtap scripts.
 %package server
 Summary: Instrumentation System Server
 Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
 Requires: systemtap-devel = %{version}-%{release}
 # On RHEL[45], /bin/mktemp comes from the 'mktemp' package.  On newer
 # distributions, /bin/mktemp comes from the 'coreutils' package.  To
@@ -129,7 +125,6 @@ Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
 Requires(postun): initscripts
-BuildRequires: nss-devel avahi-devel
 
 %description server
 This is the remote script compilation server component of systemtap.
@@ -140,8 +135,6 @@ compiles systemtap scripts to kernel objects on their demand.
 %package devel
 Summary: Programmable system-wide instrumentation system - development headers, tools
 Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
 Requires: kernel >= 2.6.9-11
 # Alternate kernel packages kernel-PAE-devel et al. have a virtual
 # provide for kernel-devel, so this requirement does the right thing,
@@ -162,8 +155,6 @@ a copy of the standard tapset library and the runtime library C files.
 %package runtime
 Summary: Programmable system-wide instrumentation system - runtime
 Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
 Requires: kernel >= 2.6.9-11
 Requires(pre): shadow-utils
 
@@ -175,8 +166,6 @@ using a local or remote systemtap-devel installation.
 
 %package client
 Summary: Programmable system-wide instrumentation system - client
-Group: Development/System
-License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: zip unzip
 Requires: systemtap-runtime = %{version}-%{release}
@@ -194,8 +183,6 @@ documentation, and a copy of the tapset library for reference.
 %package initscript
 Summary: Systemtap Initscripts
 Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
 Requires: systemtap = %{version}-%{release}
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -209,8 +196,6 @@ Sysvinit scripts to launch selected systemtap scripts at system startup.
 %package sdt-devel
 Summary: Static probe support tools
 Group: Development/System
-License: GPLv2+ and Public Domain
-URL: http://sourceware.org/systemtap/
 
 %description sdt-devel
 This package includes the <sys/sdt.h> header file used for static
@@ -222,14 +207,10 @@ with the optional dtrace-compatibility preprocessor to process related
 %package testsuite
 Summary: Instrumentation System Testsuite
 Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
 Requires: systemtap = %{version}-%{release}
 Requires: systemtap-sdt-devel = %{version}-%{release}
 Requires: dejagnu which elfutils grep
-%ifnarch %{arm} # no prelink on ARM
 Requires: prelink
-%endif
 
 %description testsuite
 This package includes the dejagnu-based systemtap stress self-testing
@@ -241,8 +222,6 @@ systemtap on the current system.
 %package grapher
 Summary: Instrumentation System Grapher
 Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
 # NB: don't bind it to a particular version (PR13499)
 Requires: systemtap
 
@@ -337,7 +316,6 @@ cd ..
 make %{?_smp_mflags}
 
 %install
-rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
 %find_lang %{name}
 
@@ -397,8 +375,6 @@ touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server/log
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
 
-%clean
-rm -rf ${RPM_BUILD_ROOT}
 
 %pre runtime
 getent group stapusr >/dev/null || groupadd -g 156 -r stapusr || groupadd -r stapusr
@@ -606,6 +582,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Apr 30 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.7-7
+- Enable crash support on ARM, cleanup spec
+
 * Thu Apr 19 2012 Karsten Hopp <karsten@redhat.com> - 1.7-6.1
 - rebuild on PPC(64) without crash, publican
 
