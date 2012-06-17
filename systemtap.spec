@@ -10,18 +10,19 @@
 %{!?with_bundled_elfutils: %global with_bundled_elfutils 0}
 %{!?elfutils_version: %global elfutils_version 0.142}
 %{!?pie_supported: %global pie_supported 1}
-%{!?with_grapher: %global with_grapher 1}
 %{!?with_boost: %global with_boost 0}
+%ifarch ppc ppc64 %{sparc}
+%{!?with_publican: %global with_publican 0}
+%else
 %{!?with_publican: %global with_publican 1}
+%endif
 %{!?publican_brand: %global publican_brand fedora}
 
 Name: systemtap
-Version: 1.7
-Release: 7%{?dist}
-Summary: Programmable system-wide instrumentation system
-Group: Development/System
-License: GPLv2+
-URL: http://sourceware.org/systemtap/
+Version: 1.8
+Release: 1%{?dist}
+# for version, see also configure.ac
+
 
 # Packaging abstract:
 #
@@ -33,7 +34,6 @@ URL: http://sourceware.org/systemtap/
 # systemtap-initscript   /etc/init.d/systemtap, req:systemtap
 # systemtap-sdt-devel    /usr/include/sys/sdt.h /usr/bin/dtrace
 # systemtap-testsuite    /usr/share/systemtap/testsuite*, req:systemtap, req:sdt-devel
-# systemtap-grapher      /usr/bin/stapgraph, req:systemtap
 #
 # Typical scenarios:
 #
@@ -46,17 +46,17 @@ URL: http://sourceware.org/systemtap/
 # intermediary stap-client for --remote:       systemtap-client (-runtime unused)
 # intermediary stap-server for --use-server:   systemtap-server (-devel unused)
 
+Summary: Programmable system-wide instrumentation system
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
 Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
-Patch10: CVE-2012-0875.patch
-
-%ifarch ppc ppc64
-%define with_publican 0
-%endif
 # Build*
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRequires: gcc-c++
 BuildRequires: gettext-devel
 BuildRequires: nss-devel avahi-devel pkgconfig
-
 %if %{with_sqlite}
 BuildRequires: sqlite-devel
 %endif
@@ -83,19 +83,10 @@ BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
 # On F10, xmlto's pdf support was broken off into a sub-package,
 # called 'xmlto-tex'.  To avoid a specific F10 BuildReq, we'll do a
 # file-based buildreq on '/usr/share/xmlto/format/fo/pdf'.
-BuildRequires: xmlto, xmlto-tex
+BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %if %{with_publican}
 BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
-%endif
-%endif
-%if %{with_grapher}
-BuildRequires: gtkmm24-devel >= 2.8
-BuildRequires: libglademm24-devel >= 2.6.7
-# If 'with_boost' isn't set, the boost-devel build requirement hasn't
-# been specified yet.
-%if ! %{with_boost}
-BuildRequires: boost-devel
 %endif
 %endif
 
@@ -114,6 +105,8 @@ the components needed to locally develop and execute systemtap scripts.
 %package server
 Summary: Instrumentation System Server
 Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
 Requires: systemtap-devel = %{version}-%{release}
 # On RHEL[45], /bin/mktemp comes from the 'mktemp' package.  On newer
 # distributions, /bin/mktemp comes from the 'coreutils' package.  To
@@ -125,6 +118,7 @@ Requires(post): chkconfig
 Requires(preun): chkconfig
 Requires(preun): initscripts
 Requires(postun): initscripts
+BuildRequires: nss-devel avahi-devel
 
 %description server
 This is the remote script compilation server component of systemtap.
@@ -135,12 +129,14 @@ compiles systemtap scripts to kernel objects on their demand.
 %package devel
 Summary: Programmable system-wide instrumentation system - development headers, tools
 Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
 Requires: kernel >= 2.6.9-11
 # Alternate kernel packages kernel-PAE-devel et al. have a virtual
 # provide for kernel-devel, so this requirement does the right thing,
 # at least past RHEL4.
 Requires: kernel-devel
-Requires: gcc gcc-c++ make
+Requires: gcc make
 # Suggest: kernel-debuginfo
 
 %description devel
@@ -155,6 +151,8 @@ a copy of the standard tapset library and the runtime library C files.
 %package runtime
 Summary: Programmable system-wide instrumentation system - runtime
 Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
 Requires: kernel >= 2.6.9-11
 Requires(pre): shadow-utils
 
@@ -166,6 +164,8 @@ using a local or remote systemtap-devel installation.
 
 %package client
 Summary: Programmable system-wide instrumentation system - client
+Group: Development/System
+License: GPLv2+
 URL: http://sourceware.org/systemtap/
 Requires: zip unzip
 Requires: systemtap-runtime = %{version}-%{release}
@@ -183,6 +183,8 @@ documentation, and a copy of the tapset library for reference.
 %package initscript
 Summary: Systemtap Initscripts
 Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
 Requires: systemtap = %{version}-%{release}
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -196,6 +198,8 @@ Sysvinit scripts to launch selected systemtap scripts at system startup.
 %package sdt-devel
 Summary: Static probe support tools
 Group: Development/System
+License: GPLv2+ and Public Domain
+URL: http://sourceware.org/systemtap/
 
 %description sdt-devel
 This package includes the <sys/sdt.h> header file used for static
@@ -207,28 +211,27 @@ with the optional dtrace-compatibility preprocessor to process related
 %package testsuite
 Summary: Instrumentation System Testsuite
 Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
 Requires: systemtap = %{version}-%{release}
 Requires: systemtap-sdt-devel = %{version}-%{release}
-Requires: dejagnu which elfutils grep
-Requires: prelink
+Requires: systemtap-server = %{version}-%{release}
+Requires: dejagnu which prelink elfutils grep nc
+Requires: gcc gcc-c++ make glibc-devel
+# testsuite/systemtap.server/client.exp needs avahi
+Requires: avahi
+%if %{with_crash}
+# testsuite/systemtap.base/crash.exp needs crash
+Requires: crash
+%endif
+%if %{_arch} == x86_64
+Requires: glibc-devel(%{__isa_name}-32)
+%endif
 
 %description testsuite
 This package includes the dejagnu-based systemtap stress self-testing
 suite.  This may be used by system administrators to thoroughly check
 systemtap on the current system.
-
-
-%if %{with_grapher}
-%package grapher
-Summary: Instrumentation System Grapher
-Group: Development/System
-# NB: don't bind it to a particular version (PR13499)
-Requires: systemtap
-
-%description grapher
-This package includes a utility for real-time visualization of
-data from SystemTap instrumentation scripts.
-%endif
 
 
 # ------------------------------------------------------------------------
@@ -245,8 +248,6 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
-
-%patch10 -p1
 
 %build
 
@@ -299,12 +300,6 @@ cd ..
 %global pie_config --disable-pie
 %endif
 
-%if %{with_grapher}
-%global grapher_config --enable-grapher
-%else
-%global grapher_config --disable-grapher
-%endif
-
 %if %{with_publican}
 %global publican_config --enable-publican --with-publican-brand=%{publican_brand}
 %else
@@ -312,10 +307,11 @@ cd ..
 %endif
 
 
-%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{grapher_config} %{publican_config} %{rpm_config} --disable-silent-rules
+%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} --disable-silent-rules
 make %{?_smp_mflags}
 
 %install
+rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
 %find_lang %{name}
 
@@ -375,6 +371,8 @@ touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server/log
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
 
+%clean
+rm -rf ${RPM_BUILD_ROOT}
 
 %pre runtime
 getent group stapusr >/dev/null || groupadd -g 156 -r stapusr || groupadd -r stapusr
@@ -388,6 +386,13 @@ getent passwd stap-server >/dev/null || \
   useradd -c "Systemtap Compile Server" -u 155 -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server || \
   useradd -c "Systemtap Compile Server" -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server
 test -e ~stap-server && chmod 755 ~stap-server
+
+if [ ! -f ~stap-server/.systemtap/rc ]; then
+  mkdir -p ~stap-server/.systemtap
+  chown stap-server:stap-server ~stap-server/.systemtap
+  echo "--rlimit-as=614400000 --rlimit-cpu=60 --rlimit-nproc=20 --rlimit-stack=1024000 --rlimit-fsize=51200000" > ~stap-server/.systemtap/rc
+  chown stap-server:stap-server ~stap-server/.systemtap/rc
+fi
 exit 0
 
 %post server
@@ -396,6 +401,7 @@ test -e %{_localstatedir}/log/stap-server/log || {
      chmod 664 %{_localstatedir}/log/stap-server/log
      chown stap-server:stap-server %{_localstatedir}/log/stap-server/log
 }
+
 # If it does not already exist, as stap-server, generate the certificate
 # used for signing and for ssl.
 if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
@@ -570,18 +576,12 @@ exit 0
 %{_datadir}/%{name}/testsuite
 
 
-%if %{with_grapher}
-%files grapher
-%defattr(-,root,root)
-%{_bindir}/stapgraph
-%dir %{_datadir}/%{name}
-%{_datadir}/%{name}/*.glade
-%{_mandir}/man1/stapgraph.1*
-%endif
-
 # ------------------------------------------------------------------------
 
 %changelog
+* Sun Jun 17 2012 Frank Ch. Eigler <fche@redhat.com> - 1.8-1
+- Upstream release.
+
 * Mon Apr 30 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.7-7
 - Enable crash support on ARM, cleanup spec
 
@@ -605,39 +605,14 @@ exit 0
 
 * Wed Feb 01 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-1
 - Upstream release.
-- Reorganize subpackages, new -client and -devel for subset installations.
 
-* Sat Jan 14 2012 Mark Wielaard <mjw@redhat.com> - 1.6-4
-- Fixes for gcc-4.7 based on upstream commits e14c86 and 47caa9.
-
-* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.6-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
-
-* Tue Dec 06 2011 Adam Jackson <ajax@redhat.com> - 1.6-2
-- Rebuild for new libpng
+* Fri Jan 13 2012 David Smith <dsmith@redhat.com> - 1.6-2
+- Fixed /bin/mktemp require.
 
 * Mon Jul 25 2011 Stan Cox <scox@redhat.com> - 1.6-1
 - Upstream release.
 
-* Mon Jul 25 2011 Frank Ch. Eigler <fche@redhat.com> - 1.5-8
-- CVE-2011-2502, CVE-2011-2503
-
-* Fri Jul 15 2011 William Cohen <wcohen@redhat.com> - 1.5-7
-- Fix sdt.h to avoid warning on arm arches.
-
-* Mon Jul 11 2011 William Cohen <wcohen@redhat.com> - 1.5-6
-- there is no crash available on arm arches
-
-* Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-4
-- PR 12899
-
-* Fri Jun 10 2011 Stan Cox <scox@redhat.com> - 1.5-3
-- Don't massage dtrace -o FILENAME arg
-
-* Thu Jun  2 2011 Stan Cox <scox@redhat.com> - 1.5-2
-- Add explicit 'Requires python' dependency
-
-* Mon May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
+* Tue May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
 - Upstream release.
 
 * Mon Jan 17 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-1
