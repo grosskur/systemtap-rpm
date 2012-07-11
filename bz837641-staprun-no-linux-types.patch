@@ -1,0 +1,38 @@
+(NB: changed paths in backport from master)
+
+commit 037853b4644bb6ebd68e2f1fac11c3636f551d8e
+Author: Josh Stone <jistone@redhat.com>
+Date:   Mon Jul 9 12:07:48 2012 -0700
+
+    Fix the build with glibc 2.16
+    
+    With our elevated compiler warnings as errors, we got:
+    
+      mainloop.c: In function 'stp_main_loop':
+      mainloop.c:581:3: error: signed and unsigned type in conditional expression [-Werror=sign-compare]
+      mainloop.c:581:3: error: signed and unsigned type in conditional expression [-Werror=sign-compare]
+      mainloop.c:583:35: error: signed and unsigned type in conditional expression [-Werror=sign-compare]
+      mainloop.c:583:35: error: signed and unsigned type in conditional expression [-Werror=sign-compare]
+      mainloop.c:631:2: error: signed and unsigned type in conditional expression [-Werror=sign-compare]
+      mainloop.c:631:2: error: signed and unsigned type in conditional expression [-Werror=sign-compare]
+      cc1: all warnings being treated as errors
+    
+    This turns out to be a macro fight between glibc-2.16 and
+    kernel-headers, via including linux/types.h.  We apparently don't
+    even need that header, so removing it lets us proceed normally.
+    
+    Those curious can watch this bug to see how the conflict is resolved:
+    https://bugzilla.redhat.com/show_bug.cgi?id=837641
+
+diff --git a/runtime/staprun/staprun.h b/runtime/staprun/staprun.h
+index 28c7116..fe42cf2 100644
+--- a/runtime/staprun/staprun.h
++++ b/runtime/staprun/staprun.h
+@@ -28,7 +28,6 @@
+ #include <sys/poll.h>
+ #include <pthread.h>
+ #include <sys/socket.h>
+-#include <linux/types.h>
+ #include <linux/limits.h>
+ #include <sys/wait.h>
+ #include <sys/statfs.h>
