@@ -228,7 +228,7 @@ Requires: avahi
 Requires: crash
 %endif
 %ifarch x86_64
-Requires: glibc-devel(%{__isa_name}-32)
+Requires: /usr/lib/libc.so
 %endif
 
 %description testsuite
@@ -588,6 +588,7 @@ exit 0
 %changelog
 * Fri Jul 13 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.8-4
 - Fix ifarch statement
+- use file based requires for glibc-devel on x86_64 so that we work in koji
 
 * Wed Jul 11 2012 Frank Ch. Eigler <fche@redhat.com> - 1.8-3
 - PR14348 task_work_add race condition fix
