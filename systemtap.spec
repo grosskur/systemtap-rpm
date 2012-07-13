@@ -20,7 +20,7 @@
 
 Name: systemtap
 Version: 1.8
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 
 
@@ -227,7 +227,7 @@ Requires: avahi
 # testsuite/systemtap.base/crash.exp needs crash
 Requires: crash
 %endif
-%if %{_arch} == x86_64
+%ifarch x86_64
 Requires: glibc-devel(%{__isa_name}-32)
 %endif
 
@@ -586,6 +586,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Fri Jul 13 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.8-4
+- Fix ifarch statement
+
 * Wed Jul 11 2012 Frank Ch. Eigler <fche@redhat.com> - 1.8-3
 - PR14348 task_work_add race condition fix
 
