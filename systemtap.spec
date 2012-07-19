@@ -20,7 +20,7 @@
 
 Name: systemtap
 Version: 1.8
-Release: 4%{?dist}
+Release: 5%{?dist}
 # for version, see also configure.ac
 
 
@@ -90,7 +90,7 @@ BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %endif
 
-Patch2: bz837641-staprun-no-linux-types.patch
+Patch2: bz837641-bz840902-linux-types.patch
 Patch3: PR14348.patch
 
 # Install requirements
@@ -252,7 +252,7 @@ find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
 
-# bz837641-staprun-no-linux-types.patch
+# bz837641-bz840902-linux-types.patch
 %patch2 -p1
 %patch3 -p1
 
@@ -586,6 +586,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Jul 18 2012 Josh Stone <jistone@redhat.com> - 1.8-5
+- bz840902 ppc build fix (related to bz837641)
+
 * Fri Jul 13 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.8-4
 - Fix ifarch statement
 - use file based requires for glibc-devel on x86_64 so that we work in koji
