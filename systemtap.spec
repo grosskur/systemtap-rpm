@@ -17,10 +17,11 @@
 %{!?with_publican: %global with_publican 1}
 %endif
 %{!?publican_brand: %global publican_brand fedora}
+%{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18}
 
 Name: systemtap
-Version: 1.8
-Release: 5%{?dist}
+Version: 2.0
+Release: 0.1.git10c737f%{?dist}
 # for version, see also configure.ac
 
 
@@ -29,7 +30,7 @@ Release: 5%{?dist}
 # systemtap              empty req:-client req:-devel
 # systemtap-server       /usr/bin/stap-server*, req:-devel
 # systemtap-devel        /usr/bin/stap, runtime, tapset, req:kernel-devel
-# systemtap-runtime      /usr/bin/staprun, /usr/bin/stapsh
+# systemtap-runtime      /usr/bin/staprun, /usr/bin/stapsh, /usr/bin/stapdyn
 # systemtap-client       /usr/bin/stap, samples, docs, tapset(bonus), req:-runtime
 # systemtap-initscript   /etc/init.d/systemtap, req:systemtap
 # systemtap-sdt-devel    /usr/include/sys/sdt.h /usr/bin/dtrace
@@ -50,13 +51,19 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+#Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+# full snapshot hash is 10c737ff1e6149ecf183a1839d722873e57dbb14
+Source: %{name}-%{version}pre-git10c737f.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: gcc-c++
 BuildRequires: gettext-devel
 BuildRequires: nss-devel avahi-devel pkgconfig
+%if %{with_dyninst}
+# include the prerelease version for now, but really this is >= 8.0
+BuildRequires: dyninst-devel >= 7.99
+%endif
 %if %{with_sqlite}
 BuildRequires: sqlite-devel
 %endif
@@ -89,9 +96,6 @@ BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %endif
-
-Patch2: bz837641-bz840902-linux-types.patch
-Patch3: PR14348.patch
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -252,10 +256,6 @@ find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
 
-# bz837641-bz840902-linux-types.patch
-%patch2 -p1
-%patch3 -p1
-
 %build
 
 %if %{with_bundled_elfutils}
@@ -271,6 +271,13 @@ cd ..
 
 # This will be needed for running stap when not installed, for the test suite.
 %global elfutils_mflags LD_LIBRARY_PATH=`pwd`/lib-elfutils
+%endif
+
+# Enable/disable the dyninst pure-userspace backend
+%if %{with_dyninst}
+%global dyninst_config --with-dyninst
+%else
+%global dyninst_config --without-dyninst
 %endif
 
 # Enable/disable the sqlite coverage testing support
@@ -314,7 +321,7 @@ cd ..
 %endif
 
 
-%configure %{?elfutils_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} --disable-silent-rules
+%configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
 make %{?_smp_mflags}
 
 %install
@@ -382,15 +389,15 @@ install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/lo
 rm -rf ${RPM_BUILD_ROOT}
 
 %pre runtime
-getent group stapusr >/dev/null || groupadd -g 156 -r stapusr || groupadd -r stapusr
-getent group stapsys >/dev/null || groupadd -g 157 -r stapsys || groupadd -r stapsys
-getent group stapdev >/dev/null || groupadd -g 158 -r stapdev || groupadd -r stapdev
+getent group stapusr >/dev/null || groupadd -g 156 -r stapusr 2>/dev/null || groupadd -r stapusr
+getent group stapsys >/dev/null || groupadd -g 157 -r stapsys 2>/dev/null || groupadd -r stapsys
+getent group stapdev >/dev/null || groupadd -g 158 -r stapdev 2>/dev/null || groupadd -r stapdev
 exit 0
 
 %pre server
-getent group stap-server >/dev/null || groupadd -g 155 -r stap-server || groupadd -r stap-server
+getent group stap-server >/dev/null || groupadd -g 155 -r stap-server 2>/dev/null || groupadd -r stap-server
 getent passwd stap-server >/dev/null || \
-  useradd -c "Systemtap Compile Server" -u 155 -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server || \
+  useradd -c "Systemtap Compile Server" -u 155 -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server 2>/dev/null || \
   useradd -c "Systemtap Compile Server" -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server
 test -e ~stap-server && chmod 755 ~stap-server
 
@@ -503,9 +510,8 @@ exit 0
 %{_bindir}/stap
 %{_bindir}/stap-prep
 %{_bindir}/stap-report
-%dir %{_datadir}/%{name}/runtime
+%dir %{_datadir}/%{name}
 %{_datadir}/%{name}/runtime
-%dir %{_datadir}/%{name}/tapset
 %{_datadir}/%{name}/tapset
 %{_mandir}/man1/stap.1*
 %{_mandir}/man7/stappaths.7*
@@ -515,12 +521,16 @@ exit 0
 %{_libdir}/%{name}/lib*.so*
 %endif
 
+
 %files runtime -f %{name}.lang
 %defattr(-,root,root)
 %attr(4110,root,stapusr) %{_bindir}/staprun
 %{_bindir}/stapsh
 %{_bindir}/stap-merge
 %{_bindir}/stap-report
+%if %{with_dyninst}
+%{_bindir}/stapdyn
+%endif
 %dir %{_libexecdir}/%{name}
 %{_libexecdir}/%{name}/stapio
 %{_libexecdir}/%{name}/stap-env
@@ -586,6 +596,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Tue Aug 07 2012 Josh Stone <jistone@redhat.com> 2.0-0.1.git10c737f
+- Update to a snapshot of the upcoming 2.0 release.
+
 * Wed Jul 18 2012 Josh Stone <jistone@redhat.com> - 1.8-5
 - bz840902 ppc build fix (related to bz837641)
 
