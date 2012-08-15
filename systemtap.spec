@@ -17,11 +17,15 @@
 %{!?with_publican: %global with_publican 1}
 %endif
 %{!?publican_brand: %global publican_brand fedora}
+%ifnarch s390 s390x %{arm}
 %{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18}
+%else
+%global with_dyninst 0
+%endif
 
 Name: systemtap
 Version: 2.0
-Release: 0.1.git10c737f%{?dist}
+Release: 0.2.git10c737f%{?dist}
 # for version, see also configure.ac
 
 
@@ -597,6 +601,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Aug 15 2012 Dan Horák <dan[at]danny.cz> 2.0-0.2.git10c737f
+- dyninst not available on s390(x) and arm
+
 * Tue Aug 07 2012 Josh Stone <jistone@redhat.com> 2.0-0.1.git10c737f
 - Update to a snapshot of the upcoming 2.0 release.
 
