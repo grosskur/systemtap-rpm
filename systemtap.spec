@@ -25,7 +25,7 @@
 
 Name: systemtap
 Version: 2.0
-Release: 0.2.git10c737f%{?dist}
+Release: 0.3.git10c737f%{?dist}
 # for version, see also configure.ac
 
 
@@ -497,6 +497,7 @@ exit 0
 %{_libexecdir}/%{name}/stap-stop-server
 %{_libexecdir}/%{name}/stap-gen-cert
 %{_libexecdir}/%{name}/stap-sign-module
+%{_libexecdir}/%{name}/stap-env
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man8/stap-server.8*
 %{_sysconfdir}/rc.d/init.d/stap-server
@@ -538,7 +539,6 @@ exit 0
 %endif
 %dir %{_libexecdir}/%{name}
 %{_libexecdir}/%{name}/stapio
-%{_libexecdir}/%{name}/stap-env
 %{_libexecdir}/%{name}/stap-authorize-cert
 %if %{with_crash}
 %dir %{_libdir}/%{name}
@@ -601,6 +601,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Fri Aug 31 2012 Lukas Berk <lberk@redhat.com> 2.0-0.3.git10c737f
+- Correct the location of stap-env
+
 * Wed Aug 15 2012 Dan Horák <dan[at]danny.cz> 2.0-0.2.git10c737f
 - dyninst not available on s390(x) and arm
 
