@@ -16,16 +16,20 @@
 %else
 %{!?with_publican: %global with_publican 1}
 %endif
+%if 0%{?rhel}
+%{!?publican_brand: %global publican_brand RedHat}
+%else
 %{!?publican_brand: %global publican_brand fedora}
+%endif
 %ifnarch s390 s390x %{arm}
-%{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18}
+%{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
 %else
 %global with_dyninst 0
 %endif
 
 Name: systemtap
 Version: 2.0
-Release: 0.3.git10c737f%{?dist}
+Release: 0.4.gitec12f84%{?dist}
 # for version, see also configure.ac
 
 
@@ -56,8 +60,8 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 #Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-# full snapshot hash is 10c737ff1e6149ecf183a1839d722873e57dbb14
-Source: %{name}-%{version}pre-git10c737f.tar.gz
+# full snapshot hash is ec12f84f44fb56fffe26db84edcc3a97ee079efe
+Source: %{name}-%{version}pre-gitec12f84.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -68,6 +72,7 @@ BuildRequires: nss-devel avahi-devel pkgconfig
 # include the prerelease version for now, but really this is >= 8.0
 BuildRequires: dyninst-devel >= 7.99
 BuildRequires: libdwarf-devel
+BuildRequires: libselinux-devel
 %endif
 %if %{with_sqlite}
 BuildRequires: sqlite-devel
@@ -228,8 +233,11 @@ URL: http://sourceware.org/systemtap/
 Requires: systemtap = %{version}-%{release}
 Requires: systemtap-sdt-devel = %{version}-%{release}
 Requires: systemtap-server = %{version}-%{release}
-Requires: dejagnu which prelink elfutils grep nc
+Requires: dejagnu which elfutils grep nc
 Requires: gcc gcc-c++ make glibc-devel
+%ifnarch ia64
+Requires: prelink
+%endif
 # testsuite/systemtap.server/client.exp needs avahi
 Requires: avahi
 %if %{with_crash}
@@ -420,20 +428,23 @@ test -e %{_localstatedir}/log/stap-server/log || {
      chmod 664 %{_localstatedir}/log/stap-server/log
      chown stap-server:stap-server %{_localstatedir}/log/stap-server/log
 }
-
 # If it does not already exist, as stap-server, generate the certificate
 # used for signing and for ssl.
 if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
    runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
-   # Authorize the certificate as a trusted ssl peer and as a trusted signer
-   # on the local host.
-   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/ssl/client >/dev/null
-   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/staprun >/dev/null
 fi
-
 # Activate the service
 /sbin/chkconfig --add stap-server
 exit 0
+
+%triggerin client -- systemtap-server
+if test -e ~stap-server/.systemtap/ssl/server/stap.cert; then
+   # echo Authorizing ssl-peer/trusted-signer certificate for local systemtap-server
+   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/ssl/client >/dev/null
+   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/staprun >/dev/null
+fi
+exit 0
+# XXX: corresponding %triggerun?
 
 %preun server
 # Check that this is the actual deinstallation of the package, as opposed to
@@ -497,6 +508,7 @@ exit 0
 %{_libexecdir}/%{name}/stap-stop-server
 %{_libexecdir}/%{name}/stap-gen-cert
 %{_libexecdir}/%{name}/stap-sign-module
+%{_libexecdir}/%{name}/stap-authorize-cert
 %{_libexecdir}/%{name}/stap-env
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man8/stap-server.8*
@@ -601,6 +613,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Thu Sep 20 2012 Josh Stone <jistone@redhat.com> 2.0-0.4.gitec12f84
+- Update to a new snapshot towards 2.0.
+
 * Fri Aug 31 2012 Lukas Berk <lberk@redhat.com> 2.0-0.3.git10c737f
 - Correct the location of stap-env
 
