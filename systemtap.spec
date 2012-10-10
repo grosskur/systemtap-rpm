@@ -29,7 +29,7 @@
 
 Name: systemtap
 Version: 2.0
-Release: 0.4.gitec12f84%{?dist}
+Release: 1%{?dist}
 # for version, see also configure.ac
 
 
@@ -59,9 +59,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-#Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-# full snapshot hash is ec12f84f44fb56fffe26db84edcc3a97ee079efe
-Source: %{name}-%{version}pre-gitec12f84.tar.gz
+Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -246,6 +244,8 @@ Requires: crash
 %endif
 %ifarch x86_64
 Requires: /usr/lib/libc.so
+# ... and /usr/lib/libgcc_s.so.*
+# ... and /usr/lib/libstdc++.so.*
 %endif
 
 %description testsuite
@@ -613,6 +613,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Tue Oct 09 2012 Josh Stone <jistone@redhat.com> - 2.0-1
+- Upstream release.
+
 * Thu Sep 20 2012 Josh Stone <jistone@redhat.com> 2.0-0.4.gitec12f84
 - Update to a new snapshot towards 2.0.
 
