@@ -1,3 +1,7 @@
+# XXX docs override, bz864730
+%{!?with_docs: %global with_docs 0}
+%{!?with_publican: %global with_publican 0}
+# XXX end docs override
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
 # crash is not available
@@ -28,8 +32,8 @@
 %endif
 
 Name: systemtap
-Version: 2.0
-Release: 1%{?dist}
+Version: 2.1
+Release: 0.1.git3df148c%{?dist}
 # for version, see also configure.ac
 
 
@@ -59,7 +63,8 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+#Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+Source: %{name}-%{version}pre-git3df148c.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -393,6 +398,7 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 initscript/config.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/stap-server
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/stap-server
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server
 touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server/log
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
@@ -517,6 +523,7 @@ exit 0
 %dir %{_sysconfdir}/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
+%dir %attr(0750,stap-server,stap-server) %{_localstatedir}/lib/stap-server
 %dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
 %ghost %config(noreplace) %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
 %ghost %attr(0755,stap-server,stap-server) %{_localstatedir}/run/stap-server
@@ -613,6 +620,10 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Fri Oct 12 2012 Josh Stone <jistone@redhat.com> 2.1-0.1.git3df148c
+- Snapshot git 3df148cb571a6bd4b2b725b7e7e3b419a5dd73b5
+- Disable docs due to bz864730
+
 * Tue Oct 09 2012 Josh Stone <jistone@redhat.com> - 2.0-1
 - Upstream release.
 
