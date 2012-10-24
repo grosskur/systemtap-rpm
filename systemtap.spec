@@ -33,7 +33,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.1.git3df148c%{?dist}
+Release: 0.48.g345f009%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,8 +63,8 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-#Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Source: %{name}-%{version}pre-git3df148c.tar.gz
+#Source: %{name}-%{version}-0.48.g345f009.tar.gz
+Source: %{name}-%{version}-0.48.g345f009.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -620,6 +620,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Oct 24 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.48.g345f009
+- Automated weekly rawhide release
+
 * Fri Oct 12 2012 Josh Stone <jistone@redhat.com> 2.1-0.1.git3df148c
 - Snapshot git 3df148cb571a6bd4b2b725b7e7e3b419a5dd73b5
 - Disable docs due to bz864730
