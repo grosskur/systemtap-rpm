@@ -33,7 +33,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.48.g345f009%{?dist}
+Release: 0.56.gf77181e%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,8 +63,8 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-#Source: %{name}-%{version}-0.48.g345f009.tar.gz
-Source: %{name}-%{version}-0.48.g345f009.tar.gz
+#Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
+Source: %{name}-%{version}-0.56.gf77181e.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -620,6 +620,11 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Oct 29 2012 Josh Stone <jistone@redhat.com> - 2.1-0.56.gf77181e
+- Semi-automated rawhide release
+- Restore the commented ftp Source
+- Rebuild for dyninst ABI bump
+
 * Wed Oct 24 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.48.g345f009
 - Automated weekly rawhide release
 
