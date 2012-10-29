@@ -29,7 +29,7 @@
 
 Name: systemtap
 Version: 2.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 # for version, see also configure.ac
 
 
@@ -613,6 +613,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Oct 29 2012 Josh Stone <jistone@redhat.com> - 2.0-2
+- Rebuild for the new ABI in the dyninst snapshot
+
 * Tue Oct 09 2012 Josh Stone <jistone@redhat.com> - 2.0-1
 - Upstream release.
 
