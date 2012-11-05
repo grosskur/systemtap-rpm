@@ -33,7 +33,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.56.gf77181e%{?dist}
+Release: 0.75.g02bff02%{?dist}
 # for version, see also configure.ac
 
 
@@ -620,6 +620,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Nov  EST Lukas Berk <lberk@redhat.com> - 2.1-0.75.g02bff02
+- Automated weekly rawhide release
+
 * Mon Oct 29 2012 Josh Stone <jistone@redhat.com> - 2.1-0.56.gf77181e
 - Semi-automated rawhide release
 - Restore the commented ftp Source
