@@ -1,3 +1,7 @@
+# XXX docs override, bz864730
+%{!?with_docs: %global with_docs 0}
+%{!?with_publican: %global with_publican 0}
+# XXX end docs override
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
 # crash is not available
@@ -29,7 +33,7 @@
 
 Name: systemtap
 Version: 2.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 # for version, see also configure.ac
 
 
@@ -67,8 +71,7 @@ BuildRequires: gcc-c++
 BuildRequires: gettext-devel
 BuildRequires: nss-devel avahi-devel pkgconfig
 %if %{with_dyninst}
-# include the prerelease version for now, but really this is >= 8.0
-BuildRequires: dyninst-devel >= 7.99
+BuildRequires: dyninst-devel >= 8.0
 BuildRequires: libdwarf-devel
 BuildRequires: libselinux-devel
 %endif
@@ -104,6 +107,9 @@ BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %endif
+
+# fix minor changes for dyninst 8.0 final
+Patch2: systemtap-2.0-dyninst-fixes.patch
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -268,6 +274,8 @@ sleep 1
 find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
+
+%patch2 -p1
 
 %build
 
@@ -613,6 +621,10 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Nov 19 2012 Josh Stone <jistone@redhat.com> 2.0-4
+- Rebuild for the final dyninst 8.0.
+- As with rawhide, disable docs due to bz864730
+
 * Mon Nov 19 2012 Karsten Hopp <karsten@redhat.com> 2.0-3
 - systemtap got compiled with an old dyninst library on ppc, bump release and rebuild
 
