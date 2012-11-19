@@ -33,7 +33,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.97.g6a1a8f4%{?dist}
+Release: 0.100.g0f3edcb%{?dist}
 # for version, see also configure.ac
 
 
@@ -64,7 +64,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 #Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Source: %{name}-%{version}-0.97.g6a1a8f4.tar.gz
+Source: %{name}-%{version}-0.100.g0f3edcb.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -72,9 +72,7 @@ BuildRequires: gcc-c++
 BuildRequires: gettext-devel
 BuildRequires: nss-devel avahi-devel pkgconfig
 %if %{with_dyninst}
-# include the prerelease version for now, but really this is >= 8.0
-BuildRequires: dyninst-devel >= 7.99
-BuildRequires: libdwarf-devel
+BuildRequires: dyninst-devel >= 8.0
 BuildRequires: libselinux-devel
 %endif
 %if %{with_sqlite}
@@ -620,6 +618,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Nov 19 2012 Josh Stone <jistone@redhat.com> - 2.1-0.100.g0f3edcb
+- New snapshot built against Dyninst 8.0
+
 * Mon Nov 19 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.97.g6a1a8f4
 - Automated weekly rawhide release
 
