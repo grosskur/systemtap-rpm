@@ -29,7 +29,7 @@
 
 Name: systemtap
 Version: 2.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 # for version, see also configure.ac
 
 
@@ -613,6 +613,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Nov 19 2012 Karsten Hopp <karsten@redhat.com> 2.0-3
+- systemtap got compiled with an old dyninst library on ppc, bump release and rebuild
+
 * Mon Oct 29 2012 Josh Stone <jistone@redhat.com> - 2.0-2
 - Rebuild for the new ABI in the dyninst snapshot
 
