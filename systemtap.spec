@@ -33,7 +33,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.100.g0f3edcb%{?dist}
+Release: 0.108.g6b378b7%{?dist}
 # for version, see also configure.ac
 
 
@@ -64,7 +64,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 #Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Source: %{name}-%{version}-0.100.g0f3edcb.tar.gz
+Source: %{name}-%{version}-0.108.g6b378b7.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -618,6 +618,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Nov 26 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.108.g6b378b7
+- Automated weekly rawhide release
+
 * Mon Nov 19 2012 Josh Stone <jistone@redhat.com> - 2.1-0.100.g0f3edcb
 - New snapshot built against Dyninst 8.0
 
