@@ -33,7 +33,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.141.g541343c%{?dist}
+Release: 0.160.g63438a7%{?dist}
 # for version, see also configure.ac
 
 
@@ -64,7 +64,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 #Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Source: %{name}-%{version}-0.141.g541343c.tar.gz
+Source: %{name}-%{version}-0.160.g63438a7.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -622,6 +622,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Dec 17 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.160.g63438a7
+- Automated weekly rawhide release
+
 * Mon Dec 10 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.141.g541343c
 - Automated weekly rawhide release
 
