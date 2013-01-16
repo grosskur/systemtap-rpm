@@ -1,0 +1,448 @@
+commit 35729a95369c30133a3485bbfbfc1ebd01048690
+Author: Josh Stone <jistone@redhat.com>
+Date:   Wed Jan 16 09:50:09 2013 -0800
+
+    PR14245 backport for release-2.0
+    
+        56629dd     have configury look for openat(2) syscall
+        c5f7c84     support /sys/kernel/debug mounted 0700
+        00d577a     fix staprun->stapio -F<fd> passing for -A (attach) mode
+        d7f9b5d     clean up error messages for staprun -d SOMETHING_AWFUL
+        17986f2     stapio should not pass inherited relay_basedir_fd
+
+diff --git a/config.in b/config.in
+index 25c4cd3..c87460a 100644
+--- a/config.in
++++ b/config.in
+@@ -65,6 +65,9 @@
+ /* Define to 1 if you have the nss libraries. */
+ #undef HAVE_NSS
+ 
++/* Define to 1 if you have the `openat' function. */
++#undef HAVE_OPENAT
++
+ /* Define to 1 if you have the `ppoll' function. */
+ #undef HAVE_PPOLL
+ 
+diff --git a/configure b/configure
+index 33112c7..a942440 100755
+--- a/configure
++++ b/configure
+@@ -8864,6 +8864,17 @@ _ACEOF
+ fi
+ done
+ 
++for ac_func in openat
++do :
++  ac_fn_c_check_func "$LINENO" "openat" "ac_cv_func_openat"
++if test "x$ac_cv_func_openat" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_OPENAT 1
++_ACEOF
++
++fi
++done
++
+ 
+ if test "${enable_prologues+set}" != set; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking to see if prologue searching should be the default" >&5
+diff --git a/configure.ac b/configure.ac
+index 8527763..e7ce384 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -32,6 +32,7 @@ AC_SYS_LARGEFILE
+ AM_GNU_GETTEXT(external)
+ AM_GNU_GETTEXT_VERSION(0.17)
+ AC_CHECK_FUNCS(ppoll)
++AC_CHECK_FUNCS(openat)
+ 
+ dnl Handle the prologues option.
+ dnl
+diff --git a/staprun/common.c b/staprun/common.c
+index ba59c88..f6acb6f 100644
+--- a/staprun/common.c
++++ b/staprun/common.c
+@@ -38,6 +38,7 @@ off_t fsize_max;
+ int fnum_max;
+ int remote_id;
+ const char *remote_uri;
++int relay_basedir_fd;
+ 
+ /* module variables */
+ char *modname = NULL;
+@@ -132,8 +133,13 @@ void parse_args(int argc, char **argv)
+ 	fnum_max = 0;
+         remote_id = -1;
+         remote_uri = NULL;
++        relay_basedir_fd = -1;
+ 
+-	while ((c = getopt(argc, argv, "ALu::vb:t:dc:o:x:S:DwRr:VT:")) != EOF) {
++	while ((c = getopt(argc, argv, "ALu::vb:t:dc:o:x:S:DwRr:VT:"
++#ifdef HAVE_OPENAT
++                           "F:"
++#endif
++                        )) != EOF) {
+ 		switch (c) {
+ 		case 'u':
+ 			need_uprobes = 1;
+@@ -179,6 +185,13 @@ void parse_args(int argc, char **argv)
+ 		case 'D':
+ 			daemon_mode = 1;
+ 			break;
++		case 'F':
++			relay_basedir_fd = atoi(optarg);
++			if (relay_basedir_fd < 0) {
++				err(_("Invalid file descriptor option '%s'.\n"), optarg);
++				usage(argv[0]);
++			}
++			break;
+ 		case 'S':
+ 			fsize_max = strtoul(optarg, &s, 10);
+ 			fsize_max <<= 20;
+@@ -327,6 +340,9 @@ void usage(char *prog)
+         "-T timeout      Specifies upper limit on amount of time reader thread\n"
+         "                will wait for new full trace buffer. Value should be an\n"
+         "                integer >= 1, which is timeout value in ms. Default 200ms.\n\n"
++#ifdef HAVE_OPENAT
++        "-F fd           Specifies file descriptor for module relay directory\n"
++#endif
+ 	"MODULE can be either a module name or a module path.  If a\n"
+ 	"module name is used, it is searched in the following directory:\n"));
+         {
+diff --git a/staprun/ctl.c b/staprun/ctl.c
+index 9cc87ea..235748b 100644
+--- a/staprun/ctl.c
++++ b/staprun/ctl.c
+@@ -7,23 +7,64 @@
+  * Public License (GPL); either version 2, or (at your option) any
+  * later version.
+  *
+- * Copyright (C) 2007 Red Hat Inc.
++ * Copyright (C) 2012 Red Hat Inc.
+  */
+ 
+ #include "staprun.h"
+ 
++#define CTL_CHANNEL_NAME ".cmd"
++
+ int init_ctl_channel(const char *name, int verb)
+ {
+ 	char buf[PATH_MAX];
+ 	struct statfs st;
+ 	int old_transport = 0;
+ 
++        (void) verb;
++        if (0) goto out; /* just to defeat gcc warnings */
++
++#ifdef HAVE_OPENAT
++        if (relay_basedir_fd >= 0) {
++                strncpy(buf, CTL_CHANNEL_NAME, PATH_MAX);
++                control_channel = openat(relay_basedir_fd, CTL_CHANNEL_NAME, O_RDWR);
++                dbug(2, "Opened %s (%d)\n", CTL_CHANNEL_NAME, control_channel);
++
++                /* NB: Extra real-id access check as below */
++                if (faccessat(relay_basedir_fd, CTL_CHANNEL_NAME, R_OK|W_OK, 0) != 0){
++                        close(control_channel);
++                        return -5;
++                }
++                if (control_channel >= 0)
++                        goto out; /* It's OK to bypass the [f]access[at] check below,
++                                     since this would only occur the *second* time 
++                                     staprun tries this gig, or within unprivileged stapio. */
++        }
++        /* PR14245, NB: we fall through to /sys ... /proc searching,
++           in case the relay_basedir_fd option wasn't given (i.e., for
++           early in staprun), or if errors out for some reason. */
++#endif
++
+ 	if (statfs("/sys/kernel/debug", &st) == 0 && (int)st.f_type == (int)DEBUGFS_MAGIC) {
+-		if (sprintf_chk(buf, "/sys/kernel/debug/systemtap/%s/.cmd", name))
++                /* PR14245: allow subsequent operations, and if
++                   necessary, staprun->stapio forks, to reuse an fd for 
++                   directory lookups (even if some parent directories have
++                   perms 0700. */
++#ifdef HAVE_OPENAT
++                if (! sprintf_chk(buf, "/sys/kernel/debug/systemtap/%s", name)) {
++                        relay_basedir_fd = open (buf, O_DIRECTORY | O_RDONLY);
++                        /* If this fails, we don't much care; the
++                           negative return value will just keep us
++                           looking up by name again next time. */
++                        /* NB: we don't plan to close this fd, so that we can pass
++                           it across staprun->stapio fork/execs. */
++                }
++#endif
++		if (sprintf_chk(buf, "/sys/kernel/debug/systemtap/%s/%s", 
++                                name, CTL_CHANNEL_NAME))
+ 			return -1;
+ 	} else {
+ 		old_transport = 1;
+-		if (sprintf_chk(buf, "/proc/systemtap/%s/.cmd", name))
++		if (sprintf_chk(buf, "/proc/systemtap/%s/%s", name, CTL_CHANNEL_NAME))
+ 			return -2;
+ 	}
+ 
+@@ -33,25 +74,30 @@ int init_ctl_channel(const char *name, int verb)
+ 	/* NB: Even if open() succeeded with effective-UID permissions, we
+ 	 * need the access() check to make sure real-UID permissions are also
+ 	 * sufficient.  When we run under the setuid staprun, effective and
+-	 * real UID may not be the same.
++	 * real UID may not be the same.  Specifically, we want to prevent 
++         * a local stapusr from trying to attach to a different stapusr's module.
+ 	 *
+ 	 * The access() is done *after* open() to avoid any TOCTOU-style race
+ 	 * condition.  We believe it's probably safe either way, as the file
+ 	 * we're trying to access connot be modified by a typical user, but
+ 	 * better safe than sorry.
+ 	 */
+-	if (access(buf, R_OK|W_OK) != 0){
++#ifdef HAVE_OPENAT
++        if (control_channel >= 0 && relay_basedir_fd >= 0) {
++                if (faccessat (relay_basedir_fd, CTL_CHANNEL_NAME, R_OK|W_OK, 0) == 0)
++                        goto out;
++                /* else fall through */
++        }
++#endif
++	if (control_channel >= 0 && access(buf, R_OK|W_OK) != 0) {
+ 		close(control_channel);
+ 		return -5;
+ 	}
+ 
++out:
+ 	if (control_channel < 0) {
+-		if (verb) {
+-			if (attach_mod && errno == ENOENT)
+-				err(_("ERROR: Can not attach. Module %s not running.\n"), name);
+-			else
+-				perr(_("Couldn't open control channel '%s'"), buf);
+-		}
++                err(_("ERROR: Cannot attach to module %s control channel; not running?\n"), 
++                    name);
+ 		return -3;
+ 	}
+ 	if (set_clexec(control_channel) < 0)
+diff --git a/staprun/mainloop.c b/staprun/mainloop.c
+index b8c39d2..e68efb3 100644
+--- a/staprun/mainloop.c
++++ b/staprun/mainloop.c
+@@ -329,6 +329,8 @@ static void read_buffer_info(void)
+   struct statfs st;
+   int fd, len, ret;
+ 
++  /* NB: we don't have to worry about PR14245 on old_transport aka
++     rhel4; no HAVE_OPENAT, and thus no -F fd option. */
+   if (!use_old_transport)
+     return;
+ 
+diff --git a/staprun/relay.c b/staprun/relay.c
+index d5c64b7..864a8f9 100644
+--- a/staprun/relay.c
++++ b/staprun/relay.c
+@@ -7,7 +7,7 @@
+  * Public License (GPL); either version 2, or (at your option) any
+  * later version.
+  *
+- * Copyright (C) 2007 Red Hat Inc.
++ * Copyright (C) 2007-2012 Red Hat Inc.
+  */
+ 
+ #include "staprun.h"
+@@ -247,14 +247,15 @@ int init_relayfs(void)
+ 	relay_fd[0] = 0;
+ 	out_fd[0] = 0;
+ 
+- 	if (statfs("/sys/kernel/debug", &st) == 0
++        if (relay_basedir_fd >= 0)
++                strcpy(relay_filebase, "\0");
++ 	else if (statfs("/sys/kernel/debug", &st) == 0
+ 	    && (int) st.f_type == (int) DEBUGFS_MAGIC) {
+ 		if (sprintf_chk(relay_filebase,
+-				"/sys/kernel/debug/systemtap/%s",
++				"/sys/kernel/debug/systemtap/%s/",
+ 				modname))
+ 			return -1;
+-	}
+- 	else {
++	} else {
+ 		err("Cannot find relayfs or debugfs mount point.\n");
+ 		return -1;
+ 	}
+@@ -263,10 +264,16 @@ int init_relayfs(void)
+ 		bulkmode = 1;
+ 
+ 	for (i = 0; i < NR_CPUS; i++) {
+-		if (sprintf_chk(buf, "%s/trace%d", relay_filebase, i))
++		if (sprintf_chk(buf, "%strace%d", relay_filebase, i))
+ 			return -1;
+ 		dbug(2, "attempting to open %s\n", buf);
+-		relay_fd[i] = open(buf, O_RDONLY | O_NONBLOCK);
++                relay_fd[i] = -1;
++#ifdef HAVE_OPENAT
++                if (relay_basedir_fd >= 0)
++                        relay_fd[i] = openat(relay_basedir_fd, buf, O_RDONLY | O_NONBLOCK);
++#endif
++                if (relay_fd[i] < 0)
++                        relay_fd[i] = open(buf, O_RDONLY | O_NONBLOCK);
+ 		if (relay_fd[i] < 0 || set_clexec(relay_fd[i]) < 0)
+ 			break;
+ 	}
+diff --git a/staprun/stapio.c b/staprun/stapio.c
+index 63556e4..e8daf0e 100644
+--- a/staprun/stapio.c
++++ b/staprun/stapio.c
+@@ -15,7 +15,7 @@
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  *
+- * Copyright (C) 2005-2007 Red Hat, Inc.
++ * Copyright (C) 2005-2012 Red Hat, Inc.
+  *
+  */
+ 
+@@ -33,6 +33,15 @@ int main(int argc, char **argv)
+ 	setup_signals();
+ 	parse_args(argc, argv);
+ 
++        /* If we inherited a relay_basedir_fd, we want to keep it to ourselves -
++           i.e., FD_CLOEXEC the bad boy. */
++        if (relay_basedir_fd >= 0) {
++                int rc =  set_clexec(relay_basedir_fd);
++                if (rc) 
++                        exit(-1);
++        }
++
++
+ 	if (buffer_size)
+ 		dbug(1, "Using a buffer of %u MB.\n", buffer_size);
+ 
+diff --git a/staprun/staprun.c b/staprun/staprun.c
+index e02a2dd..b35170b 100644
+--- a/staprun/staprun.c
++++ b/staprun/staprun.c
+@@ -204,6 +204,7 @@ static void remove_all_modules(void)
+ 	struct dirent *d;
+ 	DIR *moddir;
+ 
++        /* NB: nothing to do with PR14245 */
+ 	if (statfs("/sys/kernel/debug", &st) == 0 && (int)st.f_type == (int)DEBUGFS_MAGIC)
+ 		base = "/sys/kernel/debug/systemtap";
+ 	else
+@@ -318,7 +319,12 @@ int init_staprun(void)
+ 	rc = 0;
+ 	if (delete_mod)
+ 		exit(remove_module(modname, 1));
+-	else if (!attach_mod) {
++        if (attach_mod) {
++                /* PR14245: prime the relay_basedir_fd pump. */
++		rc = init_ctl_channel (modname, 0);
++		if (rc >= 0)
++		  close_ctl_channel ();
++        } else /* if (!attach_mod) */ {
+ 		if (need_uprobes && enable_uprobes() != 0)
+ 			return -1;
+ 
+@@ -386,6 +392,17 @@ int main(int argc, char **argv)
+ 
+ 	parse_args(argc, argv);
+ 
++        /* PR14245, For security reasons, preclude "staprun -F fd".
++           The -F option is only for stapio, but the overzealous quest
++           for commonality doesn't let us express that nicer. */
++        if (relay_basedir_fd >= 0) {
++                err(_("ERROR: relay basedir -F option is invalid for staprun\n"));
++                exit(1);
++        }
++        /* NB: later on, some of our own code may set relay_basedir_fd, for
++           passing onto stapio - or for our own reuse.  That's OK.  */
++
++
+ 	if (buffer_size)
+ 		dbug(2, "Using a buffer of %u MB.\n", buffer_size);
+ 
+@@ -427,6 +444,27 @@ int main(int argc, char **argv)
+ 	if(rename_mod)
+ 		argv[mod_optind] = modname;
+ 
++        /* PR14245: pass -F fd to stapio. Unfortunately, this requires
++           us to extend argv[], with all the C fun that entails. */
++#ifdef HAVE_OPENAT
++        if (relay_basedir_fd >= 0) {
++                char ** new_argv = calloc(sizeof(char *),argc+1);
++                const int new_Foption_size = 10; /* -FNNNNN */
++                char * new_Foption = malloc(new_Foption_size);
++                int i;
++
++                if (new_argv && new_Foption) {
++                        snprintf (new_Foption, new_Foption_size, "-F%d", relay_basedir_fd);
++                        for (i=0; argv[i] != NULL; i++)
++                                new_argv[i] = argv[i];
++                        new_argv[i++] = new_Foption; /* overwrite the NULL */
++                        new_argv[i++] = NULL; /* ensconce a new NULL */
++
++                        argv = new_argv;
++                }
++        }
++#endif
++
+ 	/* Run stapio */
+ 	if (run_as (1, getuid(), getgid(), argv[0], argv) < 0) {
+ 		perror(argv[0]);
+diff --git a/staprun/staprun.h b/staprun/staprun.h
+index 821b485..39cbcae 100644
+--- a/staprun/staprun.h
++++ b/staprun/staprun.h
+@@ -231,6 +231,7 @@ extern off_t fsize_max;
+ extern int fnum_max;
+ extern int remote_id;
+ extern const char *remote_uri;
++extern int relay_basedir_fd;
+ 
+ /* getopt variables */
+ extern char *optarg;
+diff --git a/staprun/staprun_funcs.c b/staprun/staprun_funcs.c
+index d80913d..4bc691b 100644
+--- a/staprun/staprun_funcs.c
++++ b/staprun/staprun_funcs.c
+@@ -182,6 +182,7 @@ int insert_module(
+         if (getenv ("SYSTEMTAP_SYNC") != NULL)
+                 sync();
+ 
++        dbug(2,"Module %s inserted from file %s\n", modname, module_realpath);
+ 	PROBE1(staprun, insert__module, (char*)module_realpath);
+ 	/* Actually insert the module */
+ 	ret = init_module(module_file, sbuf.st_size, opts);
+@@ -311,17 +312,6 @@ rename_module(void* module_file, const __off_t st_size)
+ #endif
+ }
+ 
+-static int
+-access_debugfs(void)
+-{
+-	/* We need to make sure that debugfs is accessible by the real UID, or
+-	 * else we won't be able to reach the .ctl path within. (PR14244) */
+-	int rc = access(DEBUGFSDIR, X_OK);
+-	if (rc < 0)
+-		err("ERROR: no access to debugfs; try \"chmod 0755 %s\" as root\n",
+-				DEBUGFSDIR);
+-	return rc;
+-}
+ 
+ int mountfs(void)
+ {
+@@ -332,7 +322,7 @@ int mountfs(void)
+ 	/* If the debugfs dir is already mounted correctly, we're done. */
+  	if (statfs(DEBUGFSDIR, &st) == 0
+ 	    && (int) st.f_type == (int) DEBUGFS_MAGIC)
+-		return access_debugfs();
++		return 0;
+ 
+ 	/* If DEBUGFSDIR exists (and is a directory), try to mount
+ 	 * DEBUGFSDIR. */
+@@ -341,7 +331,7 @@ int mountfs(void)
+ 		/* If we can mount the debugfs dir correctly, we're done. */
+           	rc = mount ("debugfs", DEBUGFSDIR, "debugfs", 0, NULL);
+ 		if (rc == 0)
+-			return access_debugfs();
++			return 0;
+ 		/* If we got ENODEV, that means that debugfs isn't
+ 		 * supported, so we'll need try try relayfs.  If we
+ 		 * didn't get ENODEV, we got a real error. */

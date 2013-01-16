@@ -33,7 +33,7 @@
 
 Name: systemtap
 Version: 2.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 # for version, see also configure.ac
 
 
@@ -110,6 +110,10 @@ BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 
 # fix minor changes for dyninst 8.0 final
 Patch2: systemtap-2.0-dyninst-fixes.patch
+
+# fixes for kernel 3.7, PR14245 and PR14712
+Patch3: systemtap-2.0-missing-VM_EXECUTABLE.patch
+Patch4: systemtap-2.0-mode-0700-debugfs.patch
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -276,6 +280,9 @@ cd ..
 %endif
 
 %patch2 -p1
+
+%patch3 -p1
+%patch4 -p1
 
 %build
 
@@ -621,6 +628,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Jan 16 2013 Josh Stone <jistone@redhat.com> 2.0-5
+- Backport fixes to work with kernel 3.7
+
 * Mon Nov 19 2012 Josh Stone <jistone@redhat.com> 2.0-4
 - Rebuild for the final dyninst 8.0.
 - As with rawhide, disable docs due to bz864730
