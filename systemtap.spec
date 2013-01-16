@@ -1,7 +1,9 @@
+%if 0%{?fedora} >= 18
 # XXX docs override, bz864730
 %{!?with_docs: %global with_docs 0}
 %{!?with_publican: %global with_publican 0}
 # XXX end docs override
+%endif
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
 # crash is not available
@@ -33,7 +35,7 @@
 
 Name: systemtap
 Version: 2.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 # for version, see also configure.ac
 
 
@@ -628,6 +630,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Jan 16 2013 Josh Stone <jistone@redhat.com> 2.0-6
+- Set the docs override only for Fedora 18+
+
 * Wed Jan 16 2013 Josh Stone <jistone@redhat.com> 2.0-5
 - Backport fixes to work with kernel 3.7
 
