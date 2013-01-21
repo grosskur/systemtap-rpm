@@ -65,7 +65,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 #Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Source: %{name}-%{version}-0.204.gc43c0f8.tar.gz
+Source: %{name}-%{version}-0.244.g2c7281e.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -391,7 +391,7 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/cache/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
-%if 0%{?with_systemd}
+%if %{?with_systemd}
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 touch $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
 install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
@@ -426,15 +426,12 @@ getent passwd stap-server >/dev/null || \
   useradd -c "Systemtap Compile Server" -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server
 test -e ~stap-server && chmod 755 ~stap-server
 
-%if 0%{?with_systemd}
-%else
 if [ ! -f ~stap-server/.systemtap/rc ]; then
   mkdir -p ~stap-server/.systemtap
   chown stap-server:stap-server ~stap-server/.systemtap
   echo "--rlimit-as=614400000 --rlimit-cpu=60 --rlimit-nproc=20 --rlimit-stack=1024000 --rlimit-fsize=51200000" > ~stap-server/.systemtap/rc
   chown stap-server:stap-server ~stap-server/.systemtap/rc
 fi
-%endif
 exit 0
 
 %post server
@@ -449,7 +446,7 @@ if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
    runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
 fi
 # Activate the service
-%if 0%{?with_systemd}
+%if %{?with_systemd}
      /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
      /bin/systemd-tmpfiles --create >/dev/null 2>&1 || :
 %else
@@ -470,7 +467,7 @@ exit 0
 # Check that this is the actual deinstallation of the package, as opposed to
 # just removing the old package on upgrade.
 if [ $1 = 0 ] ; then
-    %if 0%{?with_systemd}
+    %if %{?with_systemd}
        /bin/systemctl --no-reload disable stap-server.service >/dev/null 2>&1 || :
        /bin/systemctl stop stap-server.service >/dev/null 2>&1 || :
     %else
@@ -484,7 +481,7 @@ exit 0
 # Check whether this is an upgrade of the package.
 # If so, restart the service if it's running
 if [ "$1" -ge "1" ] ; then
-    %if 0%{?with_systemd}
+    %if %{?with_systemd}
     	/bin/systemctl restart stap-server.service >/dev/null 2>&1 || :
     %else
         /sbin/service stap-server condrestart >/dev/null 2>&1 || :
@@ -493,7 +490,7 @@ fi
 exit 0
 
 %post initscript
-%if 0%{?with_systemd}
+%if %{?with_systemd}
     /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
      /bin/systemd-tmpfiles --create >/dev/null 2>&1 || :
 %else
@@ -505,7 +502,7 @@ exit 0
 # Check that this is the actual deinstallation of the package, as opposed to
 # just removing the old package on upgrade.
 if [ $1 = 0 ] ; then
-    %if 0%{?with_systemd}
+    %if %{?with_systemd}
     	/bin/systemctl --no-reload disable stap-server.service >/dev/null 2>&1 || :
 	/bin/systemctl stop stap-server.service >/dev/null 2>&1 || :
     %else
@@ -519,7 +516,7 @@ exit 0
 # Check whether this is an upgrade of the package.
 # If so, restart the service if it's running
 if [ "$1" -ge "1" ] ; then
-    %if 0%{?with_systemd}
+    %if %{?with_systemd}
         /bin/systemctl restart stap-server.service >/dev/null 2>&1 || :
     %else
         /sbin/service systemtap condrestart >/dev/null 2>&1 || :
@@ -557,15 +554,15 @@ exit 0
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
 %{_mandir}/man8/stap-server.8*
-%if 0%{with_systemd}
+%if %{?with_systemd}
 %{_unitdir}/stap-server.service
 /usr/lib/tmpfiles.d/stap-server.conf
 %else
 %{_sysconfdir}/rc.d/init.d/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
-%config(noreplace) %{_sysconfdir}/logrotate.d/stap-server
-%endif
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
+%endif
+%config(noreplace) %{_sysconfdir}/logrotate.d/stap-server
 %dir %{_sysconfdir}/stap-server
 %dir %attr(0750,stap-server,stap-server) %{_localstatedir}/lib/stap-server
 %dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
@@ -642,7 +639,7 @@ exit 0
 
 %files initscript
 %defattr(-,root,root)
-%if 0%{?with_systemd}
+%if %{?with_systemd}
 %else
 %{_sysconfdir}/rc.d/init.d/systemtap
 %dir %{_sysconfdir}/systemtap
@@ -673,6 +670,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.238.1
+- Tweaks to systemd specific portions of spec file
+
 * Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.238
 - Added systemd functionality based on 'with_systemd' macro
 
