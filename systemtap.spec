@@ -34,7 +34,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.238%{?dist}
+Release: 0.244.g2c7281e%{?dist}
 # for version, see also configure.ac
 
 
@@ -672,6 +672,9 @@ exit 0
 %changelog
 * Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.238.1
 - Tweaks to systemd specific portions of spec file
+
+* Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.244.g2c7281e
+- Automated weekly rawhide release
 
 * Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.238
 - Added systemd functionality based on 'with_systemd' macro
