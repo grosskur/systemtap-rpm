@@ -24,13 +24,14 @@
 %ifnarch s390 s390x %{arm}
 %{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
 %else
-%global with_dyninst 0
+%{!?with_dyninst: %global with_dyninst 0}
 %endif
 %{!?with_systemd: %global with_systemd 0%{?fedora} >= 19}
+%{!?with_emacsvim: %global with_emacsvim 1}
 
 Name: systemtap
 Version: 2.1
-Release: 0.244.g2c7281e.1%{?dist}
+Release: 0.244.g2c7281e.2%{?dist}
 # for version, see also configure.ac
 
 
@@ -95,6 +96,9 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
+BuildRequires: tex(fullpage.sty) tex(fancybox.sty) tex(bchr7t.tfm)
+%endif
 # On F10, xmlto's pdf support was broken off into a sub-package,
 # called 'xmlto-tex'.  To avoid a specific F10 BuildReq, we'll do a
 # file-based buildreq on '/usr/share/xmlto/format/fo/pdf'.
@@ -103,6 +107,9 @@ BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
+%endif
+%if %{with_emacsvim}
+BuildRequires: emacs
 %endif
 
 # Install requirements
@@ -337,6 +344,10 @@ cd ..
 %configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
 make %{?_smp_mflags}
 
+%if %{with_emacsvim}
+%{_emacs_bytecompile} emacs/systemtap-mode.el
+%endif
+
 %install
 rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
@@ -387,7 +398,7 @@ mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/cache/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
-%if %{?with_systemd}
+%if %{with_systemd}
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 touch $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
 install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
@@ -405,6 +416,19 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 initscript/config.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/stap-server
 %endif
+
+%if %{with_emacsvim}
+mkdir -p $RPM_BUILD_ROOT%{_emacs_sitelispdir}
+install -p -m 644 emacs/systemtap-mode.el* $RPM_BUILD_ROOT%{_emacs_sitelispdir}
+mkdir -p $RPM_BUILD_ROOT%{_emacs_sitestartdir}
+install -p -m 644 emacs/systemtap-init.el $RPM_BUILD_ROOT%{_emacs_sitestartdir}/systemtap-init.el
+for subdir in ftdetect ftplugin indent syntax
+do
+    mkdir -p $RPM_BUILD_ROOT%{_datadir}/vim/vimfiles/$subdir
+    install -p -m 644 vim/$subdir/*.vim $RPM_BUILD_ROOT%{_datadir}/vim/vimfiles/$subdir
+done
+%endif
+
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
@@ -442,7 +466,7 @@ if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
    runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
 fi
 # Activate the service
-%if %{?with_systemd}
+%if %{with_systemd}
      /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
      /bin/systemd-tmpfiles --create >/dev/null 2>&1 || :
 %else
@@ -463,7 +487,7 @@ exit 0
 # Check that this is the actual deinstallation of the package, as opposed to
 # just removing the old package on upgrade.
 if [ $1 = 0 ] ; then
-    %if %{?with_systemd}
+    %if %{with_systemd}
        /bin/systemctl --no-reload disable stap-server.service >/dev/null 2>&1 || :
        /bin/systemctl stop stap-server.service >/dev/null 2>&1 || :
     %else
@@ -477,7 +501,7 @@ exit 0
 # Check whether this is an upgrade of the package.
 # If so, restart the service if it's running
 if [ "$1" -ge "1" ] ; then
-    %if %{?with_systemd}
+    %if %{with_systemd}
     	/bin/systemctl restart stap-server.service >/dev/null 2>&1 || :
     %else
         /sbin/service stap-server condrestart >/dev/null 2>&1 || :
@@ -486,7 +510,7 @@ fi
 exit 0
 
 %post initscript
-%if %{?with_systemd}
+%if %{with_systemd}
     /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
      /bin/systemd-tmpfiles --create >/dev/null 2>&1 || :
 %else
@@ -498,7 +522,7 @@ exit 0
 # Check that this is the actual deinstallation of the package, as opposed to
 # just removing the old package on upgrade.
 if [ $1 = 0 ] ; then
-    %if %{?with_systemd}
+    %if %{with_systemd}
     	/bin/systemctl --no-reload disable stap-server.service >/dev/null 2>&1 || :
 	/bin/systemctl stop stap-server.service >/dev/null 2>&1 || :
     %else
@@ -512,7 +536,7 @@ exit 0
 # Check whether this is an upgrade of the package.
 # If so, restart the service if it's running
 if [ "$1" -ge "1" ] ; then
-    %if %{?with_systemd}
+    %if %{with_systemd}
         /bin/systemctl restart stap-server.service >/dev/null 2>&1 || :
     %else
         /sbin/service systemtap condrestart >/dev/null 2>&1 || :
@@ -550,7 +574,7 @@ exit 0
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
 %{_mandir}/man8/stap-server.8*
-%if %{?with_systemd}
+%if %{with_systemd}
 %{_unitdir}/stap-server.service
 /usr/lib/tmpfiles.d/stap-server.conf
 %else
@@ -583,6 +607,11 @@ exit 0
 %if %{with_bundled_elfutils}
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/lib*.so*
+%endif
+%if %{with_emacsvim}
+%{_emacs_sitelispdir}/*.el*
+%{_emacs_sitestartdir}/systemtap-init.el
+%{_datadir}/vim/vimfiles/*/*.vim
 %endif
 
 
@@ -635,7 +664,7 @@ exit 0
 
 %files initscript
 %defattr(-,root,root)
-%if %{?with_systemd}
+%if %{with_systemd}
 %else
 %{_sysconfdir}/rc.d/init.d/systemtap
 %dir %{_sysconfdir}/systemtap
@@ -666,6 +695,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Thu Jan 24 2013 Frank Ch. Eigler <fche@redhat.com> - 2.1-0.244.g2c7281e.2
+- Merge in .spec file changes from upstream.
+
 * Thu Jan 24 2013 Frank Ch. Eigler <fche@redhat.com> - 2.1-0.244.g2c7281e.1
 - Turn docs back on for rawhide.
 
