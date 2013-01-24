@@ -1,7 +1,3 @@
-# XXX docs override, bz864730
-%{!?with_docs: %global with_docs 0}
-%{!?with_publican: %global with_publican 0}
-# XXX end docs override
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
 # crash is not available
