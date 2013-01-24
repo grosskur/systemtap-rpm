@@ -30,7 +30,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.244.g2c7281e%{?dist}
+Release: 0.244.g2c7281e.1%{?dist}
 # for version, see also configure.ac
 
 
@@ -666,6 +666,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Thu Jan 24 2013 Frank Ch. Eigler <fche@redhat.com> - 2.1-0.244.g2c7281e.1
+- Turn docs back on for rawhide.
+
 * Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.244.g2c7281e
 - Automated weekly rawhide release
 
