@@ -31,7 +31,7 @@
 
 Name: systemtap
 Version: 2.1
-Release: 0.244.g2c7281e.2%{?dist}
+Release: 0.280.gbddba05%{?dist}
 # for version, see also configure.ac
 
 
@@ -62,7 +62,7 @@ Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
 #Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Source: %{name}-%{version}-0.244.g2c7281e.tar.gz
+Source: %{name}-%{version}-0.280.gbddba05.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -695,6 +695,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Jan 28 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.280.gbddba05
+- Automated weekly rawhide release
+
 * Thu Jan 24 2013 Frank Ch. Eigler <fche@redhat.com> - 2.1-0.244.g2c7281e.2
 - Merge in .spec file changes from upstream.
 
