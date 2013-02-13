@@ -1,9 +1,3 @@
-%if 0%{?fedora} >= 18
-# XXX docs override, bz864730
-%{!?with_docs: %global with_docs 0}
-%{!?with_publican: %global with_publican 0}
-# XXX end docs override
-%endif
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
 # crash is not available
@@ -30,12 +24,14 @@
 %ifnarch s390 s390x %{arm}
 %{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
 %else
-%global with_dyninst 0
+%{!?with_dyninst: %global with_dyninst 0}
 %endif
+%{!?with_systemd: %global with_systemd 0%{?fedora} >= 19}
+%{!?with_emacsvim: %global with_emacsvim 1}
 
 Name: systemtap
-Version: 2.0
-Release: 6%{?dist}
+Version: 2.1
+Release: 1%{?dist}
 # for version, see also configure.ac
 
 
@@ -74,7 +70,6 @@ BuildRequires: gettext-devel
 BuildRequires: nss-devel avahi-devel pkgconfig
 %if %{with_dyninst}
 BuildRequires: dyninst-devel >= 8.0
-BuildRequires: libdwarf-devel
 BuildRequires: libselinux-devel
 %endif
 %if %{with_sqlite}
@@ -100,6 +95,9 @@ BuildRequires: elfutils-devel >= %{elfutils_version}
 %endif
 %if %{with_docs}
 BuildRequires: /usr/bin/latex /usr/bin/dvips /usr/bin/ps2pdf latex2html
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
+BuildRequires: tex(fullpage.sty) tex(fancybox.sty) tex(bchr7t.tfm)
+%endif
 # On F10, xmlto's pdf support was broken off into a sub-package,
 # called 'xmlto-tex'.  To avoid a specific F10 BuildReq, we'll do a
 # file-based buildreq on '/usr/share/xmlto/format/fo/pdf'.
@@ -109,13 +107,9 @@ BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %endif
-
-# fix minor changes for dyninst 8.0 final
-Patch2: systemtap-2.0-dyninst-fixes.patch
-
-# fixes for kernel 3.7, PR14245 and PR14712
-Patch3: systemtap-2.0-missing-VM_EXECUTABLE.patch
-Patch4: systemtap-2.0-mode-0700-debugfs.patch
+%if %{with_emacsvim}
+BuildRequires: emacs
+%endif
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -281,11 +275,6 @@ find . \( -name configure -o -name config.h.in \) -print | xargs touch
 cd ..
 %endif
 
-%patch2 -p1
-
-%patch3 -p1
-%patch4 -p1
-
 %build
 
 %if %{with_bundled_elfutils}
@@ -354,6 +343,10 @@ cd ..
 %configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
 make %{?_smp_mflags}
 
+%if %{with_emacsvim}
+%{_emacs_bytecompile} emacs/systemtap-mode.el
+%endif
+
 %install
 rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
@@ -396,24 +389,45 @@ mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/SystemTap_Beginners_Guide docs.insta
 %endif
 %endif
 
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/stap-server
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server
+touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server/log
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/cache/systemtap
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/systemtap
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
+install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
+%if %{with_systemd}
+mkdir -p $RPM_BUILD_ROOT%{_unitdir}
+touch $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
+install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
+mkdir -p $RPM_BUILD_ROOT/usr/lib/tmpfiles.d
+install -m 644 stap-server.conf $RPM_BUILD_ROOT/usr/lib/tmpfiles.d/stap-server.conf
+%else
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 install -m 755 initscript/systemtap $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/script.d
 install -m 644 initscript/config.systemtap $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/config
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/cache/systemtap
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/systemtap
-
 install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 install -m 644 initscript/config.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/stap-server
-mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server
-touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server/log
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
-install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
+%endif
+
+%if %{with_emacsvim}
+mkdir -p $RPM_BUILD_ROOT%{_emacs_sitelispdir}
+install -p -m 644 emacs/systemtap-mode.el* $RPM_BUILD_ROOT%{_emacs_sitelispdir}
+mkdir -p $RPM_BUILD_ROOT%{_emacs_sitestartdir}
+install -p -m 644 emacs/systemtap-init.el $RPM_BUILD_ROOT%{_emacs_sitestartdir}/systemtap-init.el
+for subdir in ftdetect ftplugin indent syntax
+do
+    mkdir -p $RPM_BUILD_ROOT%{_datadir}/vim/vimfiles/$subdir
+    install -p -m 644 vim/$subdir/*.vim $RPM_BUILD_ROOT%{_datadir}/vim/vimfiles/$subdir
+done
+%endif
+
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
@@ -451,7 +465,12 @@ if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
    runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
 fi
 # Activate the service
-/sbin/chkconfig --add stap-server
+%if %{with_systemd}
+     /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
+     /bin/systemd-tmpfiles --create >/dev/null 2>&1 || :
+%else
+    /sbin/chkconfig --add stap-server
+%endif
 exit 0
 
 %triggerin client -- systemtap-server
@@ -467,8 +486,13 @@ exit 0
 # Check that this is the actual deinstallation of the package, as opposed to
 # just removing the old package on upgrade.
 if [ $1 = 0 ] ; then
-    /sbin/service stap-server stop >/dev/null 2>&1
-    /sbin/chkconfig --del stap-server
+    %if %{with_systemd}
+       /bin/systemctl --no-reload disable stap-server.service >/dev/null 2>&1 || :
+       /bin/systemctl stop stap-server.service >/dev/null 2>&1 || :
+    %else
+        /sbin/service stap-server stop >/dev/null 2>&1
+    	/sbin/chkconfig --del stap-server
+    %endif
 fi
 exit 0
 
@@ -476,20 +500,34 @@ exit 0
 # Check whether this is an upgrade of the package.
 # If so, restart the service if it's running
 if [ "$1" -ge "1" ] ; then
-    /sbin/service stap-server condrestart >/dev/null 2>&1 || :
+    %if %{with_systemd}
+    	/bin/systemctl restart stap-server.service >/dev/null 2>&1 || :
+    %else
+        /sbin/service stap-server condrestart >/dev/null 2>&1 || :
+    %endif
 fi
 exit 0
 
 %post initscript
-/sbin/chkconfig --add systemtap
+%if %{with_systemd}
+    /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
+     /bin/systemd-tmpfiles --create >/dev/null 2>&1 || :
+%else
+    /sbin/chkconfig --add systemtap
+%endif
 exit 0
 
 %preun initscript
 # Check that this is the actual deinstallation of the package, as opposed to
 # just removing the old package on upgrade.
 if [ $1 = 0 ] ; then
-    /sbin/service systemtap stop >/dev/null 2>&1
-    /sbin/chkconfig --del systemtap
+    %if %{with_systemd}
+    	/bin/systemctl --no-reload disable stap-server.service >/dev/null 2>&1 || :
+	/bin/systemctl stop stap-server.service >/dev/null 2>&1 || :
+    %else
+        /sbin/service systemtap stop >/dev/null 2>&1
+    	/sbin/chkconfig --del systemtap
+    %endif
 fi
 exit 0
 
@@ -497,7 +535,11 @@ exit 0
 # Check whether this is an upgrade of the package.
 # If so, restart the service if it's running
 if [ "$1" -ge "1" ] ; then
-    /sbin/service systemtap condrestart >/dev/null 2>&1 || :
+    %if %{with_systemd}
+        /bin/systemctl restart stap-server.service >/dev/null 2>&1 || :
+    %else
+        /sbin/service systemtap condrestart >/dev/null 2>&1 || :
+    %endif
 fi
 exit 0
 
@@ -527,13 +569,21 @@ exit 0
 %{_libexecdir}/%{name}/stap-sign-module
 %{_libexecdir}/%{name}/stap-authorize-cert
 %{_libexecdir}/%{name}/stap-env
+%{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
+%{_mandir}/man7/warning*
 %{_mandir}/man8/stap-server.8*
+%if %{with_systemd}
+%{_unitdir}/stap-server.service
+/usr/lib/tmpfiles.d/stap-server.conf
+%else
 %{_sysconfdir}/rc.d/init.d/stap-server
-%config(noreplace) %{_sysconfdir}/logrotate.d/stap-server
-%dir %{_sysconfdir}/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
 %config(noreplace) %{_sysconfdir}/sysconfig/stap-server
+%endif
+%config(noreplace) %{_sysconfdir}/logrotate.d/stap-server
+%dir %{_sysconfdir}/stap-server
+%dir %attr(0750,stap-server,stap-server) %{_localstatedir}/lib/stap-server
 %dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
 %ghost %config(noreplace) %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
 %ghost %attr(0755,stap-server,stap-server) %{_localstatedir}/run/stap-server
@@ -549,11 +599,18 @@ exit 0
 %{_datadir}/%{name}/runtime
 %{_datadir}/%{name}/tapset
 %{_mandir}/man1/stap.1*
+%{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
+%{_mandir}/man7/warning*
 %doc README README.unprivileged AUTHORS NEWS COPYING
 %if %{with_bundled_elfutils}
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/lib*.so*
+%endif
+%if %{with_emacsvim}
+%{_emacs_sitelispdir}/*.el*
+%{_emacs_sitestartdir}/systemtap-init.el
+%{_datadir}/vim/vimfiles/*/*.vim
 %endif
 
 
@@ -573,7 +630,9 @@ exit 0
 %dir %{_libdir}/%{name}
 %{_libdir}/%{name}/staplog.so*
 %endif
+%{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
+%{_mandir}/man7/warning*
 %{_mandir}/man8/staprun.8*
 %doc README README.security AUTHORS NEWS COPYING
 
@@ -594,7 +653,9 @@ exit 0
 %{_mandir}/man1/stap.1*
 %{_mandir}/man1/stap-merge.1*
 %{_mandir}/man3/*
+%{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
+%{_mandir}/man7/warning*
 %dir %{_datadir}/%{name}
 %{_datadir}/%{name}/tapset
 
@@ -602,11 +663,14 @@ exit 0
 
 %files initscript
 %defattr(-,root,root)
+%if %{with_systemd}
+%else
 %{_sysconfdir}/rc.d/init.d/systemtap
 %dir %{_sysconfdir}/systemtap
 %dir %{_sysconfdir}/systemtap/conf.d
 %dir %{_sysconfdir}/systemtap/script.d
 %config(noreplace) %{_sysconfdir}/systemtap/config
+%endif
 %dir %{_localstatedir}/cache/systemtap
 %ghost %{_localstatedir}/run/systemtap
 %doc initscript/README.systemtap
@@ -630,6 +694,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Feb 13 2013 Serguei Makarov <smakarov@redhat.com> - 2.1-1
+- Upstream release.
+
 * Wed Jan 16 2013 Josh Stone <jistone@redhat.com> 2.0-6
 - Set the docs override only for Fedora 18+
 
@@ -649,54 +716,12 @@ exit 0
 * Tue Oct 09 2012 Josh Stone <jistone@redhat.com> - 2.0-1
 - Upstream release.
 
-* Thu Sep 20 2012 Josh Stone <jistone@redhat.com> 2.0-0.4.gitec12f84
-- Update to a new snapshot towards 2.0.
-
-* Fri Aug 31 2012 Lukas Berk <lberk@redhat.com> 2.0-0.3.git10c737f
-- Correct the location of stap-env
-
-* Wed Aug 15 2012 Dan Horák <dan[at]danny.cz> 2.0-0.2.git10c737f
-- dyninst not available on s390(x) and arm
-
-* Tue Aug 07 2012 Josh Stone <jistone@redhat.com> 2.0-0.1.git10c737f
-- Update to a snapshot of the upcoming 2.0 release.
-
-* Wed Jul 18 2012 Josh Stone <jistone@redhat.com> - 1.8-5
-- bz840902 ppc build fix (related to bz837641)
-
-* Fri Jul 13 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.8-4
+* Fri Jul 13 2012 Peter Robinson <pbrobinson@fedoraproject.org>
 - Fix ifarch statement
 - use file based requires for glibc-devel on x86_64 so that we work in koji
 
-* Wed Jul 11 2012 Frank Ch. Eigler <fche@redhat.com> - 1.8-3
-- PR14348 task_work_add race condition fix
-
-* Mon Jul 09 2012 Josh Stone <jistone@redhat.com>
-- bz837641 build fix
-
 * Sun Jun 17 2012 Frank Ch. Eigler <fche@redhat.com> - 1.8-1
 - Upstream release.
-
-* Mon Apr 30 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.7-7
-- Enable crash support on ARM, cleanup spec
-
-* Thu Apr 19 2012 Karsten Hopp <karsten@redhat.com> - 1.7-6.1
-- rebuild on PPC(64) without crash, publican
-
-* Thu Mar 29 2012 Richard W.M. Jones <rjones@redhat.com> - 1.7-6
-- Rebuild for rpm soname bump.
-
-* Fri Mar 16 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-5
-- dbhole advises ARM publican/fop/java is a go for launch.
-
-* Thu Mar 01 2012 Mark Wielaard <mjw@redhat.com> - 1.7-4
-- ARM currently doesn't have publican/fop/java and no prelink.
-
-* Tue Feb 28 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.7-3
-- Rebuilt for c++ ABI breakage
-
-* Wed Feb 22 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-2
-- CVE-2012-0875 (kernel panic when processing malformed DWARF unwind data)
 
 * Wed Feb 01 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-1
 - Upstream release.
