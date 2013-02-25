@@ -30,8 +30,8 @@
 %{!?with_emacsvim: %global with_emacsvim 1}
 
 Name: systemtap
-Version: 2.1
-Release: 0.38.g65fef87%{?dist}
+Version: 2.2
+Release: 0.38.g65fef87.1%{?dist}
 # for version, see also configure.ac
 
 
@@ -695,6 +695,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Feb 25 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.38.g65fef87.1
+- Update version number to 2.2 for weekly rawhide release
+
 * Mon Feb 25 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.38.g65fef87
 - Automated weekly rawhide release
 
