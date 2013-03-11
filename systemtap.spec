@@ -31,7 +31,7 @@
 
 Name: systemtap
 Version: 2.2
-Release: 0.54.g2cc83f4%{?dist}
+Release: 0.68.g8d23893%{?dist}
 # for version, see also configure.ac
 
 
@@ -61,8 +61,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-#Source: ftp://sourceware.org/pub/%{name}/releases/%{name}-%{version}.tar.gz
-Source: %{name}-%{version}-0.54.g2cc83f4.tar.gz
+Source: %{name}-%{version}-0.68.g8d23893.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -392,12 +391,19 @@ mv $RPM_BUILD_ROOT%{_datadir}/doc/systemtap/SystemTap_Beginners_Guide docs.insta
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/stap-server
+mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/lib/stap-server/.systemtap
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server
 touch $RPM_BUILD_ROOT%{_localstatedir}/log/stap-server/log
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/cache/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_localstatedir}/run/systemtap
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d
 install -m 644 initscript/logrotate.stap-server $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/stap-server
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+install -m 755 initscript/systemtap $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/conf.d
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/script.d
+install -m 644 initscript/config.systemtap $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/config
 %if %{with_systemd}
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 touch $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
@@ -405,12 +411,6 @@ install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.servic
 mkdir -p $RPM_BUILD_ROOT/usr/lib/tmpfiles.d
 install -m 644 stap-server.conf $RPM_BUILD_ROOT/usr/lib/tmpfiles.d/stap-server.conf
 %else
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-install -m 755 initscript/systemtap $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/conf.d
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/script.d
-install -m 644 initscript/config.systemtap $RPM_BUILD_ROOT%{_sysconfdir}/systemtap/config
 install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
@@ -442,8 +442,11 @@ exit 0
 %pre server
 getent group stap-server >/dev/null || groupadd -g 155 -r stap-server 2>/dev/null || groupadd -r stap-server
 getent passwd stap-server >/dev/null || \
-  useradd -c "Systemtap Compile Server" -u 155 -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server 2>/dev/null || \
-  useradd -c "Systemtap Compile Server" -g stap-server -d %{_localstatedir}/lib/stap-server -m -r -s /sbin/nologin stap-server
+  useradd -c "Systemtap Compile Server" -u 155 -g stap-server -d %{_localstatedir}/lib/stap-server -r -s /sbin/nologin stap-server 2>/dev/null || \
+  useradd -c "Systemtap Compile Server" -g stap-server -d %{_localstatedir}/lib/stap-server -r -s /sbin/nologin stap-server
+
+%post server
+
 test -e ~stap-server && chmod 755 ~stap-server
 
 if [ ! -f ~stap-server/.systemtap/rc ]; then
@@ -452,9 +455,7 @@ if [ ! -f ~stap-server/.systemtap/rc ]; then
   echo "--rlimit-as=614400000 --rlimit-cpu=60 --rlimit-nproc=20 --rlimit-stack=1024000 --rlimit-fsize=51200000" > ~stap-server/.systemtap/rc
   chown stap-server:stap-server ~stap-server/.systemtap/rc
 fi
-exit 0
 
-%post server
 test -e %{_localstatedir}/log/stap-server/log || {
      touch %{_localstatedir}/log/stap-server/log
      chmod 664 %{_localstatedir}/log/stap-server/log
@@ -463,7 +464,7 @@ test -e %{_localstatedir}/log/stap-server/log || {
 # If it does not already exist, as stap-server, generate the certificate
 # used for signing and for ssl.
 if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
-   runuser -s /bin/sh - stap-server -c %{_libexecdir}/%{name}/stap-gen-cert >/dev/null
+   runuser -s /bin/sh - stap-server -c %{_libexecdir}/systemtap/stap-gen-cert >/dev/null
 fi
 # Activate the service
 %if %{with_systemd}
@@ -477,8 +478,8 @@ exit 0
 %triggerin client -- systemtap-server
 if test -e ~stap-server/.systemtap/ssl/server/stap.cert; then
    # echo Authorizing ssl-peer/trusted-signer certificate for local systemtap-server
-   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/ssl/client >/dev/null
-   %{_libexecdir}/%{name}/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/staprun >/dev/null
+   %{_libexecdir}/systemtap/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/ssl/client >/dev/null
+   %{_libexecdir}/systemtap/stap-authorize-cert ~stap-server/.systemtap/ssl/server/stap.cert %{_sysconfdir}/systemtap/staprun >/dev/null
 fi
 exit 0
 # XXX: corresponding %triggerun?
@@ -546,30 +547,30 @@ exit 0
 
 %post
 # Remove any previously-built uprobes.ko materials
-(make -C %{_datadir}/%{name}/runtime/uprobes clean) >/dev/null 2>&1 || true
+(make -C %{_datadir}/systemtap/runtime/uprobes clean) >/dev/null 2>&1 || true
 (/sbin/rmmod uprobes) >/dev/null 2>&1 || true
 
 %preun
 # Ditto
-(make -C %{_datadir}/%{name}/runtime/uprobes clean) >/dev/null 2>&1 || true
+(make -C %{_datadir}/systemtap/runtime/uprobes clean) >/dev/null 2>&1 || true
 (/sbin/rmmod uprobes) >/dev/null 2>&1 || true
 
 # ------------------------------------------------------------------------
 
-%files -f %{name}.lang
+%files -f systemtap.lang
 # The master "systemtap" rpm doesn't include any files.
 
-%files server -f %{name}.lang
+%files server -f systemtap.lang
 %defattr(-,root,root)
 %{_bindir}/stap-server
-%dir %{_libexecdir}/%{name}
-%{_libexecdir}/%{name}/stap-serverd
-%{_libexecdir}/%{name}/stap-start-server
-%{_libexecdir}/%{name}/stap-stop-server
-%{_libexecdir}/%{name}/stap-gen-cert
-%{_libexecdir}/%{name}/stap-sign-module
-%{_libexecdir}/%{name}/stap-authorize-cert
-%{_libexecdir}/%{name}/stap-env
+%dir %{_libexecdir}/systemtap
+%{_libexecdir}/systemtap/stap-serverd
+%{_libexecdir}/systemtap/stap-start-server
+%{_libexecdir}/systemtap/stap-stop-server
+%{_libexecdir}/systemtap/stap-gen-cert
+%{_libexecdir}/systemtap/stap-sign-module
+%{_libexecdir}/systemtap/stap-authorize-cert
+%{_libexecdir}/systemtap/stap-env
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
@@ -585,6 +586,7 @@ exit 0
 %config(noreplace) %{_sysconfdir}/logrotate.d/stap-server
 %dir %{_sysconfdir}/stap-server
 %dir %attr(0750,stap-server,stap-server) %{_localstatedir}/lib/stap-server
+%dir %attr(0700,stap-server,stap-server) %{_localstatedir}/lib/stap-server/.systemtap
 %dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
 %ghost %config(noreplace) %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
 %ghost %attr(0755,stap-server,stap-server) %{_localstatedir}/run/stap-server
@@ -592,21 +594,21 @@ exit 0
 %doc README README.unprivileged AUTHORS NEWS COPYING
 
 
-%files devel -f %{name}.lang
+%files devel -f systemtap.lang
 %{_bindir}/stap
 %{_bindir}/stap-prep
 %{_bindir}/stap-report
-%dir %{_datadir}/%{name}
-%{_datadir}/%{name}/runtime
-%{_datadir}/%{name}/tapset
+%dir %{_datadir}/systemtap
+%{_datadir}/systemtap/runtime
+%{_datadir}/systemtap/tapset
 %{_mandir}/man1/stap.1*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
 %doc README README.unprivileged AUTHORS NEWS COPYING
 %if %{with_bundled_elfutils}
-%dir %{_libdir}/%{name}
-%{_libdir}/%{name}/lib*.so*
+%dir %{_libdir}/systemtap
+%{_libdir}/systemtap/lib*.so*
 %endif
 %if %{with_emacsvim}
 %{_emacs_sitelispdir}/*.el*
@@ -615,7 +617,7 @@ exit 0
 %endif
 
 
-%files runtime -f %{name}.lang
+%files runtime -f systemtap.lang
 %defattr(-,root,root)
 %attr(4110,root,stapusr) %{_bindir}/staprun
 %{_bindir}/stapsh
@@ -624,12 +626,12 @@ exit 0
 %if %{with_dyninst}
 %{_bindir}/stapdyn
 %endif
-%dir %{_libexecdir}/%{name}
-%{_libexecdir}/%{name}/stapio
-%{_libexecdir}/%{name}/stap-authorize-cert
+%dir %{_libexecdir}/systemtap
+%{_libexecdir}/systemtap/stapio
+%{_libexecdir}/systemtap/stap-authorize-cert
 %if %{with_crash}
-%dir %{_libdir}/%{name}
-%{_libdir}/%{name}/staplog.so*
+%dir %{_libdir}/systemtap
+%{_libdir}/systemtap/staplog.so*
 %endif
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
@@ -638,7 +640,7 @@ exit 0
 %doc README README.security AUTHORS NEWS COPYING
 
 
-%files client -f %{name}.lang
+%files client -f systemtap.lang
 %defattr(-,root,root)
 %doc README README.unprivileged AUTHORS NEWS COPYING examples
 %if %{with_docs}
@@ -657,27 +659,24 @@ exit 0
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
-%dir %{_datadir}/%{name}
-%{_datadir}/%{name}/tapset
+%dir %{_datadir}/systemtap
+%{_datadir}/systemtap/tapset
 
 
 
 %files initscript
 %defattr(-,root,root)
-%if %{with_systemd}
-%else
 %{_sysconfdir}/rc.d/init.d/systemtap
 %dir %{_sysconfdir}/systemtap
 %dir %{_sysconfdir}/systemtap/conf.d
 %dir %{_sysconfdir}/systemtap/script.d
 %config(noreplace) %{_sysconfdir}/systemtap/config
-%endif
 %dir %{_localstatedir}/cache/systemtap
 %ghost %{_localstatedir}/run/systemtap
 %doc initscript/README.systemtap
 
 
-%files sdt-devel -f %{name}.lang
+%files sdt-devel -f systemtap.lang
 %defattr(-,root,root)
 %{_bindir}/dtrace
 %{_includedir}/sys/sdt.h
@@ -688,160 +687,25 @@ exit 0
 
 %files testsuite
 %defattr(-,root,root)
-%dir %{_datadir}/%{name}
-%{_datadir}/%{name}/testsuite
+%dir %{_datadir}/systemtap
+%{_datadir}/systemtap/testsuite
 
 
 # ------------------------------------------------------------------------
 
 %changelog
-* Mon Mar 04 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.54.g2cc83f4
-- Automated weekly rawhide release
-
-* Mon Mar 04 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.53.g019e44d
-- Automated weekly rawhide release
-
-* Mon Feb 25 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.38.g65fef87.1
-- Update version number to 2.2 for weekly rawhide release
-
-* Mon Feb 25 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.38.g65fef87
-- Automated weekly rawhide release
-
 * Wed Feb 13 2013 Serguei Makarov <smakarov@redhat.com> - 2.1-1
 - Upstream release.
-
-* Mon Feb 11 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.385.gab733d5
-- Automated weekly rawhide release
-
-* Mon Feb 04 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.354.g75c7136
-- Automated weekly rawhide release
-
-* Mon Feb 04 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.353.g43e1259
-- Automated weekly rawhide release
-
-* Mon Jan 28 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.280.gbddba05
-- Automated weekly rawhide release
-
-* Thu Jan 24 2013 Frank Ch. Eigler <fche@redhat.com> - 2.1-0.244.g2c7281e.2
-- Merge in .spec file changes from upstream.
-
-* Thu Jan 24 2013 Frank Ch. Eigler <fche@redhat.com> - 2.1-0.244.g2c7281e.1
-- Turn docs back on for rawhide.
-
-* Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.244.g2c7281e
-- Automated weekly rawhide release
-
-* Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.238.1
-- Tweaks to systemd specific portions of spec file
-
-* Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.244.g2c7281e
-- Automated weekly rawhide release
-
-* Mon Jan 21 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.238
-- Added systemd functionality based on 'with_systemd' macro
-
-* Mon Jan 14 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.204.gc43c0f8
-- Automated weekly rawhide release
-
-* Mon Jan 07 2013 Lukas Berk <lberk@redhat.com> - 2.1-0.198.g4c5d990
-- Automated weekly rawhide release
-
-* Mon Dec 31 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.185.g283159e
-- Automated weekly rawhide release
-
-* Mon Dec 24 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.184.g6c9f0b7
-- Automated weekly rawhide release
-
-* Mon Dec 17 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.160.g63438a7
-- Automated weekly rawhide release
-
-* Mon Dec 10 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.141.g541343c
-- Automated weekly rawhide release
-
-* Mon Dec 10 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.140.g05e94cf
-- Automated weekly rawhide release
-
-* Mon Dec 03 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.119.g700d493
-- Automated weekly rawhide release
-
-* Mon Nov 26 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.108.g6b378b7
-- Automated weekly rawhide release
-
-* Mon Nov 19 2012 Josh Stone <jistone@redhat.com> - 2.1-0.100.g0f3edcb
-- New snapshot built against Dyninst 8.0
-
-* Mon Nov 19 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.97.g6a1a8f4
-- Automated weekly rawhide release
-
-* Mon Nov 12 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.87.gf4b122a
-- Automated weekly rawhide release
-
-* Mon Nov 5 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.75.g02bff02
-- Automated weekly rawhide release
-
-* Mon Oct 29 2012 Josh Stone <jistone@redhat.com> - 2.1-0.56.gf77181e
-- Semi-automated rawhide release
-- Restore the commented ftp Source
-- Rebuild for dyninst ABI bump
-
-* Wed Oct 24 2012 Lukas Berk <lberk@redhat.com> - 2.1-0.48.g345f009
-- Automated weekly rawhide release
-
-* Fri Oct 12 2012 Josh Stone <jistone@redhat.com> 2.1-0.1.git3df148c
-- Snapshot git 3df148cb571a6bd4b2b725b7e7e3b419a5dd73b5
-- Disable docs due to bz864730
 
 * Tue Oct 09 2012 Josh Stone <jistone@redhat.com> - 2.0-1
 - Upstream release.
 
-* Thu Sep 20 2012 Josh Stone <jistone@redhat.com> 2.0-0.4.gitec12f84
-- Update to a new snapshot towards 2.0.
-
-* Fri Aug 31 2012 Lukas Berk <lberk@redhat.com> 2.0-0.3.git10c737f
-- Correct the location of stap-env
-
-* Wed Aug 15 2012 Dan Horák <dan[at]danny.cz> 2.0-0.2.git10c737f
-- dyninst not available on s390(x) and arm
-
-* Tue Aug 07 2012 Josh Stone <jistone@redhat.com> 2.0-0.1.git10c737f
-- Update to a snapshot of the upcoming 2.0 release.
-
-* Wed Jul 18 2012 Josh Stone <jistone@redhat.com> - 1.8-5
-- bz840902 ppc build fix (related to bz837641)
-
-* Fri Jul 13 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.8-4
+* Fri Jul 13 2012 Peter Robinson <pbrobinson@fedoraproject.org>
 - Fix ifarch statement
 - use file based requires for glibc-devel on x86_64 so that we work in koji
 
-* Wed Jul 11 2012 Frank Ch. Eigler <fche@redhat.com> - 1.8-3
-- PR14348 task_work_add race condition fix
-
-* Mon Jul 09 2012 Josh Stone <jistone@redhat.com>
-- bz837641 build fix
-
 * Sun Jun 17 2012 Frank Ch. Eigler <fche@redhat.com> - 1.8-1
 - Upstream release.
-
-* Mon Apr 30 2012 Peter Robinson <pbrobinson@fedoraproject.org> - 1.7-7
-- Enable crash support on ARM, cleanup spec
-
-* Thu Apr 19 2012 Karsten Hopp <karsten@redhat.com> - 1.7-6.1
-- rebuild on PPC(64) without crash, publican
-
-* Thu Mar 29 2012 Richard W.M. Jones <rjones@redhat.com> - 1.7-6
-- Rebuild for rpm soname bump.
-
-* Fri Mar 16 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-5
-- dbhole advises ARM publican/fop/java is a go for launch.
-
-* Thu Mar 01 2012 Mark Wielaard <mjw@redhat.com> - 1.7-4
-- ARM currently doesn't have publican/fop/java and no prelink.
-
-* Tue Feb 28 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.7-3
-- Rebuilt for c++ ABI breakage
-
-* Wed Feb 22 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-2
-- CVE-2012-0875 (kernel panic when processing malformed DWARF unwind data)
 
 * Wed Feb 01 2012 Frank Ch. Eigler <fche@redhat.com> - 1.7-1
 - Upstream release.
