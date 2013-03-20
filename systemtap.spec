@@ -14,7 +14,7 @@
 %ifarch ppc ppc64 %{sparc}
 %{!?with_publican: %global with_publican 0}
 %else
-%{!?with_publican: %global with_publican 1}
+%{!?with_publican: %global with_publican 0}
 %endif
 %if 0%{?rhel}
 %{!?publican_brand: %global publican_brand RedHat}
@@ -694,6 +694,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Mar 20 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.84.g74fc0fe
+- Automated weekly rawhide release
+
 * Wed Mar 20 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.84.g74fc0fe
 - Automated weekly rawhide release
 
