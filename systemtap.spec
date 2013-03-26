@@ -14,7 +14,7 @@
 %ifarch ppc ppc64 %{sparc}
 %{!?with_publican: %global with_publican 0}
 %else
-%{!?with_publican: %global with_publican 1}
+%{!?with_publican: %global with_publican 0}
 %endif
 %if 0%{?rhel}
 %{!?publican_brand: %global publican_brand RedHat}
@@ -31,7 +31,7 @@
 
 Name: systemtap
 Version: 2.2
-Release: 0.104.gd142b86%{?dist}
+Release: 0.104.gd142b86.1%{?dist}
 # for version, see also configure.ac
 
 
@@ -61,7 +61,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.104.gd142b86.tar.gz
+Source: %{name}-%{version}-0.104.gd142b86.1.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -696,6 +696,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Tue Mar 26 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.104.gd142b86.1
+- Turned off doc generation until BZ920216 resolved
+
 * Tue Mar 26 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.104.gd142b86
 - Added stap-prep.1 man page
 
