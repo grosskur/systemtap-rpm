@@ -14,7 +14,7 @@
 %ifarch ppc ppc64 %{sparc}
 %{!?with_publican: %global with_publican 0}
 %else
-%{!?with_publican: %global with_publican 0}
+%{!?with_publican: %global with_publican 1}
 %endif
 %if 0%{?rhel}
 %{!?publican_brand: %global publican_brand RedHat}
@@ -31,7 +31,7 @@
 
 Name: systemtap
 Version: 2.2
-Release: 0.103.g5c607f5%{?dist}
+Release: 0.104.gd142b86%{?dist}
 # for version, see also configure.ac
 
 
@@ -61,7 +61,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.103.g5c607f5.tar.gz
+Source: %{name}-%{version}-0.104.gd142b86.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -602,6 +602,7 @@ exit 0
 %{_datadir}/systemtap/runtime
 %{_datadir}/systemtap/tapset
 %{_mandir}/man1/stap.1*
+%{_mandir}/man1/stap-prep.1*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
@@ -654,6 +655,7 @@ exit 0
 %{_bindir}/stap-prep
 %{_bindir}/stap-report
 %{_mandir}/man1/stap.1*
+%{_mandir}/man1/stap-prep.1*
 %{_mandir}/man1/stap-merge.1*
 %{_mandir}/man3/*
 %{_mandir}/man7/error*
@@ -694,23 +696,8 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
-* Tue Mar 26 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.103.g5c607f5
-- BZ926602 Updated autoconf to version 2.69
-
-* Mon Mar 25 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.94.g48bf64d
-- Automated weekly rawhide release
-
-* Wed Mar 20 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.84.g74fc0fe
-- Automated weekly rawhide release
-
-* Wed Mar 20 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.84.g74fc0fe
-- Automated weekly rawhide release
-
-* Mon Mar 11 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.74.gb1e0e10
-- Automated weekly rawhide release
-
-* Mon Mar 11 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.70.g23c2c25
-- Automated weekly rawhide release
+* Tue Mar 26 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.104.gd142b86
+- Added stap-prep.1 man page
 
 * Wed Feb 13 2013 Serguei Makarov <smakarov@redhat.com> - 2.1-1
 - Upstream release.
