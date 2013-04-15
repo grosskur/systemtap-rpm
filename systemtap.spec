@@ -1,5 +1,5 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 1}
+%{!?with_docs: %global with_docs 0}
 # crash is not available
 %ifarch ppc ppc64 %{sparc}
 %{!?with_crash: %global with_crash 0}
@@ -696,6 +696,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Apr 15 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
+- Automated weekly rawhide release
+
 * Mon Apr 15 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
