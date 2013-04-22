@@ -1,5 +1,5 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 1}
+%{!?with_docs: %global with_docs 0}
 # crash is not available
 %ifarch ppc ppc64 %{sparc}
 %{!?with_crash: %global with_crash 0}
@@ -31,7 +31,7 @@
 
 Name: systemtap
 Version: 2.2
-Release: 0.104.gd142b86.1%{?dist}
+Release: 0.125.ga88f5ee%{?dist}
 # for version, see also configure.ac
 
 
@@ -61,7 +61,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.104.gd142b86.1.tar.gz
+Source: %{name}-%{version}-0.125.ga88f5ee.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -696,11 +696,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
-* Tue Mar 26 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.104.gd142b86.1
-- Turned off doc generation until BZ920216 resolved
-
-* Tue Mar 26 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.104.gd142b86
-- Added stap-prep.1 man page
+* Mon Apr 22 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
 
 * Wed Feb 13 2013 Serguei Makarov <smakarov@redhat.com> - 2.1-1
 - Upstream release.
@@ -724,7 +722,7 @@ exit 0
 * Mon Jul 25 2011 Stan Cox <scox@redhat.com> - 1.6-1
 - Upstream release.
 
-* Tue May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
+* Mon May 23 2011 Stan Cox <scox@redhat.com> - 1.5-1
 - Upstream release.
 
 * Mon Jan 17 2011 Frank Ch. Eigler <fche@redhat.com> - 1.4-1
@@ -783,7 +781,7 @@ exit 0
 * Wed Jul 11 2007 Will Cohen <wcohen@redhat.com> - 0.5.14-2
 - Fix Requires and BuildRequires for sqlite.
 
-* Tue Jul  2 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.14-1
+* Mon Jul  2 2007 Frank Ch. Eigler <fche@redhat.com> - 0.5.14-1
 - Many robustness improvements: 1117, 1134, 1305, 1307, 1570, 1806,
   2033, 2116, 2224, 2339, 2341, 2406, 2426, 2438, 2583, 3037,
   3261, 3282, 3331, 3428 3519, 3545, 3625, 3648, 3880, 3888, 3911,
@@ -846,7 +844,7 @@ exit 0
 * Wed Sep  7 2005 Frank Ch. Eigler <fche@redhat.com>
 - Bump version.
 
-* Wed Aug 16 2005 Frank Ch. Eigler <fche@redhat.com>
+* Tue Aug 16 2005 Frank Ch. Eigler <fche@redhat.com>
 - Bump version.
 
 * Wed Aug  3 2005 Martin Hunt <hunt@redhat.com> - 0.2.2-1
@@ -867,5 +865,5 @@ exit 0
 - Fix up some of the path names.
 - Add Requires and BuildRequires.
 
-* Wed Jul 19 2005 Will Cohen <wcohen@redhat.com>
+* Tue Jul 19 2005 Will Cohen <wcohen@redhat.com>
 - Initial creation of RPM.
