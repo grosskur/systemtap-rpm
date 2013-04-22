@@ -696,6 +696,9 @@ exit 0
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Apr 22 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
+- Automated weekly rawhide release
+
 * Mon Apr 15 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
 - Automated weekly rawhide release
 
