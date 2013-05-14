@@ -28,10 +28,11 @@
 %endif
 %{!?with_systemd: %global with_systemd 0%{?fedora} >= 19}
 %{!?with_emacsvim: %global with_emacsvim 1}
+%{!?with_java: %global with_java 1}
 
 Name: systemtap
 Version: 2.2
-Release: 0.127.g8ca891c%{?dist}
+Release: 1%{?dist}
 # for version, see also configure.ac
 
 
@@ -45,6 +46,7 @@ Release: 0.127.g8ca891c%{?dist}
 # systemtap-initscript   /etc/init.d/systemtap, req:systemtap
 # systemtap-sdt-devel    /usr/include/sys/sdt.h /usr/bin/dtrace
 # systemtap-testsuite    /usr/share/systemtap/testsuite*, req:systemtap, req:sdt-devel
+# systemtap-runtime-java libHelperSDT.so, HelperSDT.jar, stapbm, req:-runtime
 #
 # Typical scenarios:
 #
@@ -61,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.127.g8ca891c.tar.gz
+Source: ftp://sourceware.org/pub/systemtap/releases/systemtap-%{version}.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -109,6 +111,9 @@ BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
 %endif
 %if %{with_emacsvim}
 BuildRequires: emacs
+%endif
+%if %{with_java}
+BuildRequires: jpackage-utils java-devel
 %endif
 
 # Install requirements
@@ -260,6 +265,22 @@ suite.  This may be used by system administrators to thoroughly check
 systemtap on the current system.
 
 
+%if %{with_java}
+%package runtime-java
+Summary: Systemtap Java Runtime Support
+Group: Development/System
+License: GPLv2+
+URL: http://sourceware.org/systemtap/
+Requires: systemtap-runtime = %{version}-%{release}
+Requires: byteman > 2.0
+
+%description runtime-java
+This package includes support files needed to run systemtap scripts
+that probe Java processes running on the OpenJDK 1.6 and OpenJDK 1.7
+runtimes using Byteman.
+%endif
+
+
 # ------------------------------------------------------------------------
 
 %prep
@@ -339,8 +360,13 @@ cd ..
 %global publican_config --disable-publican
 %endif
 
+%if %{with_java}
+%global java_config --with-java=%{_jvmdir}/java
+%else
+%global java_config --without-java
+%endif
 
-%configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
+%configure %{?elfutils_config} %{dyninst_config} %{sqlite_config} %{crash_config} %{docs_config} %{pie_config} %{publican_config} %{rpm_config} %{java_config} --disable-silent-rules --with-extra-version="rpm %{version}-%{release}"
 make %{?_smp_mflags}
 
 %if %{with_emacsvim}
@@ -557,6 +583,42 @@ exit 0
 
 # ------------------------------------------------------------------------
 
+%if %{with_java}
+
+%triggerin runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
+for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
+    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
+        ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
+        ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+    done
+done
+
+%triggerun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
+for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
+    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
+        rm -f ${archdir}/libHelperSDT_${arch}.so
+        rm -f ${archdir}/../ext/HelperSDT.jar
+    done
+done
+
+%triggerpostun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
+# Restore links for any JDKs remaining after a package removal:
+for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
+    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
+        ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
+        ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+    done
+done
+
+# XXX: analogous support for other types of JRE/JDK??
+
+%endif
+
+# ------------------------------------------------------------------------
+
 %files -f systemtap.lang
 # The master "systemtap" rpm doesn't include any files.
 
@@ -607,6 +669,10 @@ exit 0
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
 %doc README README.unprivileged AUTHORS NEWS COPYING
+%if %{with_java}
+%dir %{_libexecdir}/systemtap
+%{_libexecdir}/systemtap/libHelperSDT_*.so
+%endif
 %if %{with_bundled_elfutils}
 %dir %{_libdir}/systemtap
 %{_libdir}/systemtap/lib*.so*
@@ -678,7 +744,7 @@ exit 0
 %doc initscript/README.systemtap
 
 
-%files sdt-devel -f systemtap.lang
+%files sdt-devel
 %defattr(-,root,root)
 %{_bindir}/dtrace
 %{_includedir}/sys/sdt.h
@@ -693,24 +759,20 @@ exit 0
 %{_datadir}/systemtap/testsuite
 
 
+%if %{with_java}
+%files runtime-java
+%dir %{_libexecdir}/systemtap
+%{_libexecdir}/systemtap/libHelperSDT_*.so
+%{_libexecdir}/systemtap/HelperSDT.jar
+%{_libexecdir}/systemtap/stapbm
+%endif
+
+
 # ------------------------------------------------------------------------
 
 %changelog
-* Mon Apr 29 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.127.g8ca891c
-- Automated weekly rawhide release
-
-* Mon Apr 22 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
-- Automated weekly rawhide release
-
-* Mon Apr 22 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
-- Automated weekly rawhide release
-
-* Mon Apr 15 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
-- Automated weekly rawhide release
-
-* Mon Apr 15 2013 Lukas Berk <lberk@redhat.com> - 2.2-0.125.ga88f5ee
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
+* Tue May 14 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2-1
+- Upstream release.
 
 * Wed Feb 13 2013 Serguei Makarov <smakarov@redhat.com> - 2.1-1
 - Upstream release.
