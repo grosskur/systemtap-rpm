@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.3
-Release: 0.45.ge2a412f%{?dist}
+Release: 0.48.g0d8d5d7%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.45.ge2a412f.tar.gz
+Source: %{name}-%{version}-0.48.g0d8d5d7.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -115,6 +115,7 @@ BuildRequires: emacs
 %if %{with_java}
 BuildRequires: jpackage-utils java-devel
 %endif
+BuildRequires: /usr/bin/xvfb-run
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -659,12 +660,13 @@ done
 %files devel -f systemtap.lang
 %{_bindir}/stap
 %{_bindir}/stap-prep
-%{_bindir}/stap-report.1*
+%{_bindir}/stap-report
 %dir %{_datadir}/systemtap
 %{_datadir}/systemtap/runtime
 %{_datadir}/systemtap/tapset
 %{_mandir}/man1/stap.1*
 %{_mandir}/man1/stap-prep.1*
+%{_mandir}/man1/stap-report.1*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
@@ -689,7 +691,7 @@ done
 %attr(4110,root,stapusr) %{_bindir}/staprun
 %{_bindir}/stapsh
 %{_bindir}/stap-merge
-%{_bindir}/stap-report.1*
+%{_bindir}/stap-report
 %if %{with_dyninst}
 %{_bindir}/stapdyn
 %endif
@@ -700,6 +702,7 @@ done
 %dir %{_libdir}/systemtap
 %{_libdir}/systemtap/staplog.so*
 %endif
+%{_mandir}/man1/stap-report.1*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
@@ -719,10 +722,11 @@ done
 %endif
 %{_bindir}/stap
 %{_bindir}/stap-prep
-%{_bindir}/stap-report.1*
+%{_bindir}/stap-report
 %{_mandir}/man1/stap.1*
 %{_mandir}/man1/stap-prep.1*
 %{_mandir}/man1/stap-merge.1*
+%{_mandir}/man1/stap-report.1*
 %{_mandir}/man3/*
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
@@ -771,9 +775,8 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
-* Mon May 27 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.45.ge2a412f
+* Mon May 27 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.48.g0d8d5d7
 - Automated weekly rawhide release
-- Added stap-report.1 to doc files
 - Applied spec changes from upstream git
 
 * Thu May 16 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2.1-1
