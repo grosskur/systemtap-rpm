@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.3
-Release: 0.48.g0d8d5d7%{?dist}
+Release: 0.51.ge15a40c%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.48.g0d8d5d7.tar.gz
+Source: %{name}-%{version}-0.51.ge15a40c.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -115,6 +115,7 @@ BuildRequires: emacs
 %if %{with_java}
 BuildRequires: jpackage-utils java-devel
 %endif
+# A workaround for BZ920216 which requires an X server to build docs
 BuildRequires: /usr/bin/xvfb-run
 
 # Install requirements
@@ -775,7 +776,7 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
-* Mon May 27 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.48.g0d8d5d7
+* Mon May 27 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.51.ge15a40c
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
 
