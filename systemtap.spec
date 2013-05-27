@@ -1,5 +1,5 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 0}
+%{!?with_docs: %global with_docs 1}
 # crash is not available
 %ifarch ppc ppc64 %{sparc}
 %{!?with_crash: %global with_crash 0}
@@ -14,7 +14,7 @@
 %ifarch ppc ppc64 %{sparc}
 %{!?with_publican: %global with_publican 0}
 %else
-%{!?with_publican: %global with_publican 0}
+%{!?with_publican: %global with_publican 1}
 %endif
 %if 0%{?rhel}
 %{!?publican_brand: %global publican_brand RedHat}
@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.3
-Release: 0.44.g2c10863%{?dist}
+Release: 0.45.ge2a412f%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.44.g2c10863.tar.gz
+Source: %{name}-%{version}-0.45.ge2a412f.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -659,7 +659,7 @@ done
 %files devel -f systemtap.lang
 %{_bindir}/stap
 %{_bindir}/stap-prep
-%{_bindir}/stap-report
+%{_bindir}/stap-report.1*
 %dir %{_datadir}/systemtap
 %{_datadir}/systemtap/runtime
 %{_datadir}/systemtap/tapset
@@ -689,7 +689,7 @@ done
 %attr(4110,root,stapusr) %{_bindir}/staprun
 %{_bindir}/stapsh
 %{_bindir}/stap-merge
-%{_bindir}/stap-report
+%{_bindir}/stap-report.1*
 %if %{with_dyninst}
 %{_bindir}/stapdyn
 %endif
@@ -719,7 +719,7 @@ done
 %endif
 %{_bindir}/stap
 %{_bindir}/stap-prep
-%{_bindir}/stap-report
+%{_bindir}/stap-report.1*
 %{_mandir}/man1/stap.1*
 %{_mandir}/man1/stap-prep.1*
 %{_mandir}/man1/stap-merge.1*
@@ -771,8 +771,9 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
-* Mon May 27 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.44.g2c10863
+* Mon May 27 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.45.ge2a412f
 - Automated weekly rawhide release
+- Added stap-report.1 to doc files
 - Applied spec changes from upstream git
 
 * Thu May 16 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2.1-1
