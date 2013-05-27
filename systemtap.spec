@@ -1,5 +1,5 @@
 %{!?with_sqlite: %global with_sqlite 1}
-%{!?with_docs: %global with_docs 0}
+%{!?with_docs: %global with_docs 1}
 # crash is not available
 %ifarch ppc ppc64 %{sparc}
 %{!?with_crash: %global with_crash 0}
@@ -31,8 +31,8 @@
 %{!?with_java: %global with_java 1}
 
 Name: systemtap
-Version: 2.2.1
-Release: 1%{?dist}
+Version: 2.3
+Release: 0.44.g2c10863%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: ftp://sourceware.org/pub/systemtap/releases/systemtap-%{version}.tar.gz
+Source: %{name}-%{version}-0.44.g2c10863.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -771,6 +771,10 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon May 27 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.44.g2c10863
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Thu May 16 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2.1-1
 - Upstream release.
 
