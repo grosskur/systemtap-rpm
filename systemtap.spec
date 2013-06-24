@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.3
-Release: 0.152.g60c493c%{?dist}
+Release: 0.170.g091f73b%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.152.g60c493c.tar.gz
+Source: %{name}-%{version}-0.170.g091f73b.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -707,7 +707,11 @@ done
 %{_mandir}/man7/error*
 %{_mandir}/man7/stappaths.7*
 %{_mandir}/man7/warning*
+%{_mandir}/man8/stapsh.8*
 %{_mandir}/man8/staprun.8*
+%if %{with_dyninst}
+%{_mandir}/man8/stapdyn.8*
+%endif
 %doc README README.security AUTHORS NEWS COPYING
 
 
@@ -776,13 +780,7 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
-* Mon Jun 17 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.152.g60c493c
-- Automated weekly rawhide release
-
-* Sun Jun 09 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.118.ge1c85da
-- Automated weekly rawhide release
-
-* Mon Jun 03 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.89.g8571631
+* Mon Jun 24 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.170.g091f73b
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
 
