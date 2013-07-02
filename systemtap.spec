@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.3
-Release: 0.170.g091f73b%{?dist}
+Release: 0.204.g2759d5b%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.170.g091f73b.tar.gz
+Source: %{name}-%{version}-0.204.g2759d5b.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -255,6 +255,9 @@ Requires: avahi
 # testsuite/systemtap.base/crash.exp needs crash
 Requires: crash
 %endif
+%if %{with_java}
+Requires: systemtap-runtime-java = %{version}-%{release}
+%endif
 %ifarch x86_64
 Requires: /usr/lib/libc.so
 # ... and /usr/lib/libgcc_s.so.*
@@ -436,8 +439,8 @@ install -m 644 initscript/config.systemtap $RPM_BUILD_ROOT%{_sysconfdir}/systemt
 mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 touch $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
 install -m 644 stap-server.service $RPM_BUILD_ROOT%{_unitdir}/stap-server.service
-mkdir -p $RPM_BUILD_ROOT/usr/lib/tmpfiles.d
-install -m 644 stap-server.conf $RPM_BUILD_ROOT/usr/lib/tmpfiles.d/stap-server.conf
+mkdir -p $RPM_BUILD_ROOT%{_tmpfilesdir}
+install -m 644 stap-server.conf $RPM_BUILD_ROOT%{_tmpfilesdir}/stap-server.conf
 %else
 install -m 755 initscript/stap-server $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d/
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/stap-server/conf.d
@@ -641,7 +644,7 @@ done
 %{_mandir}/man8/stap-server.8*
 %if %{with_systemd}
 %{_unitdir}/stap-server.service
-/usr/lib/tmpfiles.d/stap-server.conf
+%{_tmpfilesdir}/stap-server.conf
 %else
 %{_sysconfdir}/rc.d/init.d/stap-server
 %dir %{_sysconfdir}/stap-server/conf.d
@@ -780,7 +783,7 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
-* Mon Jun 24 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.170.g091f73b
+* Tue Jul 02 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.204.g2759d5b
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
 
