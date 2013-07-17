@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.3
-Release: 0.234.g54cbada%{?dist}
+Release: 0.235.g54cbada%{?dist}
 # for version, see also configure.ac
 
 
@@ -783,6 +783,9 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Wed Jul 17 2013 Petr Pisar <ppisar@redhat.com> - 2.3-0.235.g54cbada
+- Perl 5.18 rebuild
+
 * Mon Jul 15 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.234.g54cbada
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
