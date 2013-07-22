@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.3
-Release: 0.235.g54cbada%{?dist}
+Release: 0.244.gca49ae2%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.234.g54cbada.tar.gz
+Source: %{name}-%{version}-0.244.gca49ae2.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -783,6 +783,9 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Jul 22 2013 Lukas Berk <lberk@redhat.com> - 2.3-0.244.gca49ae2
+- Automated weekly rawhide release
+
 * Wed Jul 17 2013 Petr Pisar <ppisar@redhat.com> - 2.3-0.235.g54cbada
 - Perl 5.18 rebuild
 
