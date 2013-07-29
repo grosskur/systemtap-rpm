@@ -26,13 +26,13 @@
 %else
 %{!?with_dyninst: %global with_dyninst 0}
 %endif
-%{!?with_systemd: %global with_systemd 0%{?fedora} >= 19}
+%{!?with_systemd: %global with_systemd 0%{?fedora} >= 19 || 0%{?rhel} >= 7}
 %{!?with_emacsvim: %global with_emacsvim 1}
 %{!?with_java: %global with_java 1}
 
 Name: systemtap
-Version: 2.3
-Release: 1%{?dist}
+Version: 2.4
+Release: 0.9.geada930%{?dist}
 # for version, see also configure.ac
 
 
@@ -55,7 +55,7 @@ Release: 1%{?dist}
 # local user:            systemtap
 #
 # Unusual scenarios:
-# 
+#
 # intermediary stap-client for --remote:       systemtap-client (-runtime unused)
 # intermediary stap-server for --use-server:   systemtap-server (-devel unused)
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: ftp://sourceware.org/pub/systemtap/releases/systemtap-%{version}.tar.gz
+Source: %{name}-%{version}-0.9.geada930.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -201,8 +201,8 @@ Requires: coreutils grep sed unzip zip
 Requires: openssh-clients
 
 %description client
-This package contains/requires the components needed to develop 
-systemtap scripts, and compile them using a local systemtap-devel 
+This package contains/requires the components needed to develop
+systemtap scripts, and compile them using a local systemtap-devel
 or a remote systemtap-server installation, then run them using a
 local or remote systemtap-runtime.  It includes script samples and
 documentation, and a copy of the tapset library for reference.
@@ -783,6 +783,10 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Jul 29 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.9.geada930
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Thu Jul 25 2013 David Smith <dsmith@redhat.com> - 2.3
 - Upstream release.
 
