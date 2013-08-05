@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.4
-Release: 0.9.geada930%{?dist}
+Release: 0.19.g03207fd%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.9.geada930.tar.gz
+Source: %{name}-%{version}-0.19.g03207fd.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -783,6 +783,9 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Aug 05 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.19.g03207fd
+- Automated weekly rawhide release
+
 * Mon Jul 29 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.9.geada930
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
