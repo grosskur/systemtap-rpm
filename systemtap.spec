@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.4
-Release: 0.25.g3f873e5%{?dist}
+Release: 0.47.g2e9858c%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.25.g3f873e5.tar.gz
+Source: %{name}-%{version}-0.47.g2e9858c.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -107,6 +107,10 @@ BuildRequires: xmlto /usr/share/xmlto/format/fo/pdf
 %if %{with_publican}
 BuildRequires: publican
 BuildRequires: /usr/share/publican/Common_Content/%{publican_brand}/defaults.cfg
+
+# A workaround for BZ920216 which requires an X server to build docs
+# with publican.
+BuildRequires: /usr/bin/xvfb-run
 %endif
 %endif
 %if %{with_emacsvim}
@@ -115,8 +119,6 @@ BuildRequires: emacs
 %if %{with_java}
 BuildRequires: jpackage-utils java-devel
 %endif
-# A workaround for BZ920216 which requires an X server to build docs
-BuildRequires: /usr/bin/xvfb-run
 
 # Install requirements
 Requires: systemtap-client = %{version}-%{release}
@@ -246,6 +248,8 @@ Requires: systemtap-sdt-devel = %{version}-%{release}
 Requires: systemtap-server = %{version}-%{release}
 Requires: dejagnu which elfutils grep nc
 Requires: gcc gcc-c++ make glibc-devel
+# testsuite/systemtap.base/ptrace.exp needs strace
+Requires: strace
 %ifnarch ia64
 Requires: prelink
 %endif
@@ -592,7 +596,15 @@ exit 0
 
 %triggerin runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
-    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %ifarch %{ix86} ppc64
+        %ifarch ppc64
+            arch=ppc64
+	%else
+	    arch=i386
+	%endif
+    %else
+        arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
         ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
         ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
@@ -601,7 +613,15 @@ done
 
 %triggerun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
-    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %ifarch %{ix86} ppc64
+        %ifarch ppc64
+            arch=ppc64
+	%else
+	    arch=i386
+	%endif
+    %else
+        arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
         rm -f ${archdir}/libHelperSDT_${arch}.so
         rm -f ${archdir}/../ext/HelperSDT.jar
@@ -611,7 +631,15 @@ done
 %triggerpostun runtime-java -- java-1.7.0-openjdk, java-1.6.0-openjdk
 # Restore links for any JDKs remaining after a package removal:
 for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
-    arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %ifarch %{ix86} ppc64
+        %ifarch ppc64
+            arch=ppc64
+	%else
+	    arch=i386
+	%endif
+    %else
+        arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
+    %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
         ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
         ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
@@ -783,6 +811,10 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Aug 26 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.47.g2e9858c
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Aug 19 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.25.g3f873e5
 - Automated weekly rawhide release
 
