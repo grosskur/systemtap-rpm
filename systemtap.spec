@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.4
-Release: 0.47.g2e9858c%{?dist}
+Release: 0.81.g2b5bbe5%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.47.g2e9858c.tar.gz
+Source: %{name}-%{version}-0.81.g2b5bbe5.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -250,6 +250,10 @@ Requires: dejagnu which elfutils grep nc
 Requires: gcc gcc-c++ make glibc-devel
 # testsuite/systemtap.base/ptrace.exp needs strace
 Requires: strace
+# testsuite/systemtap.base/ipaddr.exp needs nc. Unfortunately, the rpm
+# that provides nc has changed over time (from 'nc' to
+# 'nmap-ncat'). So, we'll do a file-based require.
+Requires: /usr/bin/nc
 %ifnarch ia64
 Requires: prelink
 %endif
@@ -482,7 +486,14 @@ getent passwd stap-server >/dev/null || \
 
 %post server
 
-test -e ~stap-server && chmod 755 ~stap-server
+# We have some duplication between the %files listings for the
+# ~stap-server directories and the explicit mkdir/chown/chmod bits
+# here.  Part of the reason may be that a preexisting stap-server
+# account may well be placed somewhere other than
+# %{_localstatedir}/lib/stap-server, but we'd like their permissions
+# set similarly.
+
+test -e ~stap-server && chmod 750 ~stap-server
 
 if [ ! -f ~stap-server/.systemtap/rc ]; then
   mkdir -p ~stap-server/.systemtap
@@ -493,7 +504,7 @@ fi
 
 test -e %{_localstatedir}/log/stap-server/log || {
      touch %{_localstatedir}/log/stap-server/log
-     chmod 664 %{_localstatedir}/log/stap-server/log
+     chmod 644 %{_localstatedir}/log/stap-server/log
      chown stap-server:stap-server %{_localstatedir}/log/stap-server/log
 }
 # If it does not already exist, as stap-server, generate the certificate
@@ -811,6 +822,10 @@ done
 # ------------------------------------------------------------------------
 
 %changelog
+* Mon Sep 09 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.81.g2b5bbe5
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Aug 26 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.47.g2e9858c
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
