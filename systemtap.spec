@@ -1,7 +1,7 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
 # crash is not available
-%ifarch ppc ppc64 %{sparc}
+%ifarch ppc ppc64 %{sparc} aarch64
 %{!?with_crash: %global with_crash 0}
 %else
 %{!?with_crash: %global with_crash 1}
@@ -11,7 +11,7 @@
 %{!?elfutils_version: %global elfutils_version 0.142}
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_boost: %global with_boost 0}
-%ifarch ppc ppc64 %{sparc}
+%ifarch ppc ppc64 %{sparc} aarch64
 %{!?with_publican: %global with_publican 0}
 %else
 %{!?with_publican: %global with_publican 1}
@@ -21,7 +21,7 @@
 %else
 %{!?publican_brand: %global publican_brand fedora}
 %endif
-%ifnarch s390 s390x %{arm}
+%ifnarch s390 s390x %{arm} aarch64
 %{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
 %else
 %{!?with_dyninst: %global with_dyninst 0}
@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.4
-Release: 0.93.g892a56b%{?dist}
+Release: 0.109.g217de68%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,7 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.93.g892a56b.tar.gz
+Source: %{name}-%{version}-0.109.g217de68.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -821,7 +821,15 @@ done
 
 # ------------------------------------------------------------------------
 
+# Future new-release entries should be of the form
+# * DDD MMM DD YYYY YOURNAME <YOUREMAIL> - V-R
+# - Upstream release, see wiki page below for detailed notes.
+#   http://sourceware.org/systemtap/wiki/SystemTapReleases
+
 %changelog
+* Mon Sep 23 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.109.g217de68
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
 * Mon Sep 16 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.93.g892a56b
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
