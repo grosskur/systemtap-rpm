@@ -32,7 +32,7 @@
 
 Name: systemtap
 Version: 2.4
-Release: 0.109.g217de68.1%{?dist}
+Release: 0.127.g98df4da%{?dist}
 # for version, see also configure.ac
 
 
@@ -63,9 +63,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.109.g217de68.tar.gz
-
-Patch2: systemtap-snapshot-revert-sdt-section.patch
+Source: %{name}-%{version}-0.127.g98df4da.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -300,8 +298,6 @@ runtimes using Byteman.
 
 %prep
 %setup -q %{?setup_elfutils}
-
-%patch2 -p1
 
 %if %{with_bundled_elfutils}
 cd elfutils-%{elfutils_version}
@@ -831,6 +827,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Sep 30 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.127.g98df4da
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Thu Sep 26 2013 Josh Stone <jistone@redhat.com> - 2.4-0.109.g217de68.1
 - The upstream sdt-types change broke glibc; revert for now...
 
