@@ -49,7 +49,7 @@
 
 Name: systemtap
 Version: 2.4
-Release: 0.173.g2576d05.1%{?dist}
+Release: 0.186.gc1cb76c%{?dist}
 # for version, see also configure.ac
 
 
@@ -82,7 +82,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.173.g2576d05.tar.gz
+Source: %{name}-%{version}-0.186.gc1cb76c.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -449,10 +449,6 @@ make %{?_smp_mflags}
 rm -rf ${RPM_BUILD_ROOT}
 make DESTDIR=$RPM_BUILD_ROOT install
 %find_lang %{name}
-
-# Temporary kludge, don't let the examples symlink collide with the following mv.
-# Upstream is renaming the symlink to EXAMPLES, commit c878e1d3.
-test -L examples && rm -f examples
 
 # We want the examples in the special doc dir, not the build install dir.
 # We build it in place and then move it away so it doesn't get installed
@@ -974,6 +970,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Oct 28 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.186.gc1cb76c
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Wed Oct 23 2013 Josh Stone <jistone@redhat.com> - 2.4-0.173.g2576d05.1
 - BZ1022483: don't ship the sourcedir 'examples' symlink.
 
