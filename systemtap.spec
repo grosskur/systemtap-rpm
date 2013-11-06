@@ -49,7 +49,7 @@
 
 Name: systemtap
 Version: 2.4
-Release: 0.233.g5c0aabb%{?dist}
+Release: 1%{?dist}
 # for version, see also configure.ac
 
 
@@ -82,7 +82,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.233.g5c0aabb.tar.gz
+Source: ftp://sourceware.org/pub/systemtap/releases/systemtap-%{version}.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -970,62 +970,13 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
-* Mon Nov 04 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.233.g5c0aabb
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
+* Wed Nov 06 2013 Frank Ch. Eigler <fche@redhat.com> - 2.4-1
+- Upstream release.
 
-* Mon Oct 28 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.186.gc1cb76c
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
+* Wed Oct 09 2013 Jonathan Lebon <jlebon@redhat.com>
+- Added runtime-virthost and runtime-virtguest packages.
 
-* Wed Oct 23 2013 Josh Stone <jistone@redhat.com> - 2.4-0.173.g2576d05.1
-- BZ1022483: don't ship the sourcedir 'examples' symlink.
-
-* Mon Oct 21 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.173.g2576d05
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Tue Oct 15 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.137.gbbb71aa
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Mon Oct 07 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.131.g1acfc03
-- Automated weekly rawhide release
-
-* Mon Sep 30 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.127.g98df4da
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Thu Sep 26 2013 Josh Stone <jistone@redhat.com> - 2.4-0.109.g217de68.1
-- The upstream sdt-types change broke glibc; revert for now...
-
-* Mon Sep 23 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.109.g217de68
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Mon Sep 16 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.93.g892a56b
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Mon Sep 09 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.81.g2b5bbe5
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Mon Aug 26 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.47.g2e9858c
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Mon Aug 19 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.25.g3f873e5
-- Automated weekly rawhide release
-
-* Mon Aug 05 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.19.g03207fd
-- Automated weekly rawhide release
-
-* Mon Jul 29 2013 Lukas Berk <lberk@redhat.com> - 2.4-0.9.geada930
-- Automated weekly rawhide release
-- Applied spec changes from upstream git
-
-* Thu Jul 25 2013 David Smith <dsmith@redhat.com> - 2.3
+* Thu Jul 25 2013 Frank Ch. Eigler <fche@redhat.com> - 2.3-1
 - Upstream release.
 
 * Thu May 16 2013 Frank Ch. Eigler <fche@redhat.com> - 2.2.1-1
