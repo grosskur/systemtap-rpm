@@ -40,16 +40,20 @@
 %endif
 
 %if %{with_virtguest}
-   %if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
-      %define udevrulesdir /lib/udev/rules.d
+   %if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
+      %define udevrulesdir /usr/lib/udev/rules.d
    %else
-      %define udevrulesdir /etc/udev/rules.d
+      %if 0%{?rhel} >= 6
+         %define udevrulesdir /lib/udev/rules.d
+      %else # RHEL5
+         %define udevrulesdir /etc/udev/rules.d
+      %endif
    %endif
 %endif
 
 Name: systemtap
-Version: 2.4
-Release: 1%{?dist}
+Version: 2.5
+Release: 0.36.g1bbf3f9%{?dist}
 # for version, see also configure.ac
 
 
@@ -82,7 +86,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: ftp://sourceware.org/pub/systemtap/releases/systemtap-%{version}.tar.gz
+Source: %{name}-%{version}-0.36.g1bbf3f9.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -970,6 +974,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Nov 18 2013 Lukas Berk <lberk@redhat.com> - 2.5-0.36.g1bbf3f9
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Wed Nov 06 2013 Frank Ch. Eigler <fche@redhat.com> - 2.4-1
 - Upstream release.
 
