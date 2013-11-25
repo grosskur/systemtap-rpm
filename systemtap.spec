@@ -53,7 +53,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.36.g1bbf3f9%{?dist}
+Release: 0.47.gb72512c%{?dist}
 # for version, see also configure.ac
 
 
@@ -86,7 +86,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.36.g1bbf3f9.tar.gz
+Source: %{name}-%{version}-0.47.gb72512c.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -974,6 +974,9 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Nov 25 2013 Lukas Berk <lberk@redhat.com> - 2.5-0.47.gb72512c
+- Automated weekly rawhide release
+
 * Mon Nov 18 2013 Lukas Berk <lberk@redhat.com> - 2.5-0.36.g1bbf3f9
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
