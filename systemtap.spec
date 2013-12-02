@@ -53,7 +53,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.47.gb72512c%{?dist}
+Release: 0.70.g2200b70%{?dist}
 # for version, see also configure.ac
 
 
@@ -86,7 +86,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.47.gb72512c.tar.gz
+Source: %{name}-%{version}-0.70.g2200b70.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -578,7 +578,11 @@ test -e ~stap-server && chmod 750 ~stap-server
 if [ ! -f ~stap-server/.systemtap/rc ]; then
   mkdir -p ~stap-server/.systemtap
   chown stap-server:stap-server ~stap-server/.systemtap
-  echo "--rlimit-as=614400000 --rlimit-cpu=60 --rlimit-nproc=20 --rlimit-stack=1024000 --rlimit-fsize=51200000" > ~stap-server/.systemtap/rc
+  # PR16276: guess at a reasonable number for a default --rlimit-nproc 
+  numcpu=`/usr/bin/getconf _NPROCESSORS_ONLN`
+  if [ -z "$numcpu" -o "$numcpu" -lt 1 ]; then numcpu=1; fi
+  nproc=`expr $numcpu \* 30`
+  echo "--rlimit-as=614400000 --rlimit-cpu=60 --rlimit-nproc=$nproc --rlimit-stack=1024000 --rlimit-fsize=51200000" > ~stap-server/.systemtap/rc
   chown stap-server:stap-server ~stap-server/.systemtap/rc
 fi
 
@@ -974,6 +978,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Dec 02 2013 Lukas Berk <lberk@redhat.com> - 2.5-0.70.g2200b70
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Nov 25 2013 Lukas Berk <lberk@redhat.com> - 2.5-0.47.gb72512c
 - Automated weekly rawhide release
 
