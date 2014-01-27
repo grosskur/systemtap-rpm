@@ -57,7 +57,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.151.g6ded984aa63f%{?dist}
+Release: 0.185.g4a3f6fd34498%{?dist}
 # for version, see also configure.ac
 
 
@@ -90,7 +90,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.151.g6ded984aa63f.tar.gz
+Source: %{name}-%{version}-0.185.g4a3f6fd34498.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -612,10 +612,11 @@ test -e %{_localstatedir}/log/stap-server/log || {
 if test ! -e ~stap-server/.systemtap/ssl/server/stap.cert; then
    runuser -s /bin/sh - stap-server -c %{_libexecdir}/systemtap/stap-gen-cert >/dev/null
 fi
-# Activate the service
+# Prepare the service
 %if %{with_systemd}
-     /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
-     /bin/systemd-tmpfiles --create >/dev/null 2>&1 || :
+     # Note, Fedora policy doesn't allow network services enabled by default
+     # /bin/systemctl enable stap-server.service >/dev/null 2>&1 || :
+     /bin/systemd-tmpfiles --create %{_tmpfilesdir}/stap-server.conf >/dev/null 2>&1 || :
 %else
     /sbin/chkconfig --add stap-server
 %endif
@@ -649,7 +650,7 @@ exit 0
 # If so, restart the service if it's running
 if [ "$1" -ge "1" ] ; then
     %if %{with_systemd}
-        /bin/systemctl restart stap-server.service >/dev/null 2>&1 || :
+        /bin/systemctl condrestart stap-server.service >/dev/null 2>&1 || :
     %else
         /sbin/service stap-server condrestart >/dev/null 2>&1 || :
     %endif
@@ -997,6 +998,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Jan 27 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.185.g4a3f6fd34498
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Jan 20 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.151.g6ded984aa63f
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
