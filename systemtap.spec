@@ -57,7 +57,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.191.g651a87924c22%{?dist}
+Release: 0.239.g873c6f49b639%{?dist}
 # for version, see also configure.ac
 
 
@@ -90,7 +90,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.191.g651a87924c22.tar.gz
+Source: %{name}-%{version}-0.239.g873c6f49b639.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -594,7 +594,7 @@ test -e ~stap-server && chmod 750 ~stap-server
 if [ ! -f ~stap-server/.systemtap/rc ]; then
   mkdir -p ~stap-server/.systemtap
   chown stap-server:stap-server ~stap-server/.systemtap
-  # PR16276: guess at a reasonable number for a default --rlimit-nproc 
+  # PR16276: guess at a reasonable number for a default --rlimit-nproc
   numcpu=`/usr/bin/getconf _NPROCESSORS_ONLN`
   if [ -z "$numcpu" -o "$numcpu" -lt 1 ]; then numcpu=1; fi
   nproc=`expr $numcpu \* 30`
@@ -765,8 +765,10 @@ for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
         arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
     %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
-        ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
-        ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+        if [ -d %{archdir} ]; then
+            ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
+            ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+        fi
     done
 done
 
@@ -800,8 +802,10 @@ for f in %{_libexecdir}/systemtap/libHelperSDT_*.so; do
         arch=`basename $f | cut -f2 -d_ | cut -f1 -d.`
     %endif
     for archdir in %{_jvmdir}/*openjdk*/jre/lib/${arch}; do
-        ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
-        ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+        if [ -d %{archdir} ]; then
+            ln -sf %{_libexecdir}/systemtap/libHelperSDT_${arch}.so ${archdir}/libHelperSDT_${arch}.so
+            ln -sf %{_libexecdir}/systemtap/HelperSDT.jar ${archdir}/../ext/HelperSDT.jar
+	fi
     done
 done
 
@@ -844,7 +848,6 @@ done
 %dir %attr(0755,stap-server,stap-server) %{_localstatedir}/log/stap-server
 %ghost %config(noreplace) %attr(0644,stap-server,stap-server) %{_localstatedir}/log/stap-server/log
 %ghost %attr(0755,stap-server,stap-server) %{_localstatedir}/run/stap-server
-%doc initscript/README.stap-server
 %doc README README.unprivileged AUTHORS NEWS COPYING
 
 
@@ -940,7 +943,7 @@ done
 %config(noreplace) %{_sysconfdir}/systemtap/config
 %dir %{_localstatedir}/cache/systemtap
 %ghost %{_localstatedir}/run/systemtap
-%doc initscript/README.systemtap
+%{_mandir}/man8/systemtap.8*
 %if %{with_dracut}
    %dir %{dracutstap}
    %{dracutstap}/*
@@ -998,6 +1001,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Tue Feb 18 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.239.g873c6f49b639
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Feb 10 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.191.g651a87924c22
 - Automated weekly rawhide release
 
