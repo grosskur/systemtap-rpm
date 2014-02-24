@@ -33,6 +33,11 @@
 %{!?with_virthost: %global with_virthost 0%{?fedora} >= 19 || 0%{?rhel} >= 7}
 %{!?with_virtguest: %global with_virtguest 1}
 %{!?with_dracut: %global with_dracut 0%{?fedora} >= 19 || 0%{?rhel} >= 7}
+%ifarch x86_64
+%{!?with_mokutil: %global with_mokutil 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
+%else
+%{!?with_mokutil: %global with_mokutil 0}
+%endif
 
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
    %define initdir %{_initddir}
@@ -57,7 +62,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.239.g873c6f49b639%{?dist}
+Release: 0.274.gde6aa5194bf4%{?dist}
 # for version, see also configure.ac
 
 
@@ -90,7 +95,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.239.g873c6f49b639.tar.gz
+Source: %{name}-%{version}-0.274.gde6aa5194bf4.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -232,6 +237,9 @@ Requires: zip unzip
 Requires: systemtap-runtime = %{version}-%{release}
 Requires: coreutils grep sed unzip zip
 Requires: openssh-clients
+%if %{with_mokutil}
+Requires: mokutil
+%endif
 
 %description client
 This package contains/requires the components needed to develop
@@ -1001,6 +1009,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Feb 24 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.274.gde6aa5194bf4
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Tue Feb 18 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.239.g873c6f49b639
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
