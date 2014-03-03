@@ -35,8 +35,10 @@
 %{!?with_dracut: %global with_dracut 0%{?fedora} >= 19 || 0%{?rhel} >= 7}
 %ifarch x86_64
 %{!?with_mokutil: %global with_mokutil 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
+%{!?with_openssl: %global with_openssl 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
 %else
 %{!?with_mokutil: %global with_mokutil 0}
+%{!?with_openssl: %global with_openssl 0}
 %endif
 
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
@@ -62,7 +64,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.274.gde6aa5194bf4%{?dist}
+Release: 0.294.g09c16468eb17%{?dist}
 # for version, see also configure.ac
 
 
@@ -95,7 +97,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.274.gde6aa5194bf4.tar.gz
+Source: %{name}-%{version}-0.294.g09c16468eb17.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -185,6 +187,9 @@ Requires(preun): chkconfig
 Requires(preun): initscripts
 Requires(postun): initscripts
 BuildRequires: nss-devel avahi-devel
+%if %{with_openssl}
+Requires: openssl
+%endif
 
 %description server
 This is the remote script compilation server component of systemtap.
@@ -1009,6 +1014,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Mar 03 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.294.g09c16468eb17
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Feb 24 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.274.gde6aa5194bf4
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
