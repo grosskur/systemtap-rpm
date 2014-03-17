@@ -64,7 +64,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.318.g9ee1bfe9ac1c%{?dist}
+Release: 0.349.g2dd920e34796%{?dist}
 # for version, see also configure.ac
 
 
@@ -97,7 +97,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.318.g9ee1bfe9ac1c.tar.gz
+Source: %{name}-%{version}-0.349.g2dd920e34796.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -202,7 +202,6 @@ Summary: Programmable system-wide instrumentation system - development headers, 
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: kernel >= 2.6.9-11
 # Alternate kernel packages kernel-PAE-devel et al. have a virtual
 # provide for kernel-devel, so this requirement does the right thing,
 # at least past RHEL4.
@@ -224,7 +223,6 @@ Summary: Programmable system-wide instrumentation system - runtime
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Requires: kernel >= 2.6.9-11
 Requires(pre): shadow-utils
 
 %description runtime
@@ -1014,6 +1012,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Mar 17 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.349.g2dd920e34796
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Mar 10 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.318.g9ee1bfe9ac1c
 - Automated weekly rawhide release
 
