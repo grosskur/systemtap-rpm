@@ -1,7 +1,7 @@
 %{!?with_sqlite: %global with_sqlite 1}
 %{!?with_docs: %global with_docs 1}
 # crash is not available
-%ifarch ppc ppc64 %{sparc} aarch64
+%ifarch ppc ppc64 %{sparc} aarch64 ppc64le
 %{!?with_crash: %global with_crash 0}
 %else
 %{!?with_crash: %global with_crash 1}
@@ -11,7 +11,7 @@
 %{!?elfutils_version: %global elfutils_version 0.142}
 %{!?pie_supported: %global pie_supported 1}
 %{!?with_boost: %global with_boost 0}
-%ifarch ppc ppc64 %{sparc} aarch64
+%ifarch ppc ppc64 %{sparc} aarch64 ppc64le
 %{!?with_publican: %global with_publican 0}
 %else
 %{!?with_publican: %global with_publican 1}
@@ -21,7 +21,7 @@
 %else
 %{!?publican_brand: %global publican_brand fedora}
 %endif
-%ifnarch s390 s390x %{arm} aarch64
+%ifnarch s390 s390x %{arm} aarch64 ppc64le
 %{!?with_dyninst: %global with_dyninst 0%{?fedora} >= 18 || 0%{?rhel} >= 7}
 %else
 %{!?with_dyninst: %global with_dyninst 0}
@@ -39,6 +39,10 @@
 %else
 %{!?with_mokutil: %global with_mokutil 0}
 %{!?with_openssl: %global with_openssl 0}
+%endif
+
+%ifarch ppc64le
+%global with_virthost 0
 %endif
 
 %if 0%{?fedora} >= 18 || 0%{?rhel} >= 6
@@ -64,7 +68,7 @@
 
 Name: systemtap
 Version: 2.5
-Release: 0.376.g450056a8faa6%{?dist}
+Release: 0.415.g7caa63eb91fd%{?dist}
 # for version, see also configure.ac
 
 
@@ -97,7 +101,7 @@ Summary: Programmable system-wide instrumentation system
 Group: Development/System
 License: GPLv2+
 URL: http://sourceware.org/systemtap/
-Source: %{name}-%{version}-0.376.g450056a8faa6.tar.gz
+Source: %{name}-%{version}-0.415.g7caa63eb91fd.tar.gz
 
 # Build*
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -1012,6 +1016,10 @@ done
 #   http://sourceware.org/systemtap/wiki/SystemTapReleases
 
 %changelog
+* Mon Mar 31 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.415.g7caa63eb91fd
+- Automated weekly rawhide release
+- Applied spec changes from upstream git
+
 * Mon Mar 24 2014 Lukas Berk <lberk@redhat.com> - 2.5-0.376.g450056a8faa6
 - Automated weekly rawhide release
 - Applied spec changes from upstream git
