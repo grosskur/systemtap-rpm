@@ -14,7 +14,11 @@
 %ifarch ppc ppc64 %{sparc} aarch64 ppc64le
 %{!?with_publican: %global with_publican 0}
 %else
+%if 0%{?fedora} || 0%{?rhel} >= 7
 %{!?with_publican: %global with_publican 1}
+%else
+%{!?with_publican: %global with_publican 0}
+%endif
 %endif
 %if 0%{?rhel}
 %{!?publican_brand: %global publican_brand RedHat}
